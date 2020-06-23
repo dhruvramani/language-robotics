@@ -131,9 +131,9 @@ class SeqVAE(torch.nn.Module):
         if self.decoder:
             self.latent2hidden = torch.nn.Linear(self.latent_size, self.hidden_size * self.hidden_factor)
 
-    def forward(self, input_sequence, length=self.max_sequence_length):        
+    def forward(self, input_sequence):        
         batch_size = input_sequence.size(0)
-        #sorted_lengths, sorted_idx = torch.sort(length, descending=True)
+        #sorted_lengths, sorted_idx = torch.sort(self.max_sequence_length, descending=True)
         #input_sequence = input_sequence[sorted_idx]
         #input_sequence = torch.nn.rnn_utils.pack_padded_sequence(input_sequence, sorted_lengths.data.tolist(), batch_first=True)
 
