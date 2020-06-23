@@ -52,10 +52,11 @@ class GoalEncoder(torch.nn.Module):
         self.lin1 = torch.nn.Linear(state_dim, self.latent_dim)
         self.relu = torch.nn.ReLU()
 
-    def forward(self, obv, perception_module):
-        if(obv.size([-1]) != self.state_dim):
-            obv = perception_module(obv, None)
-        output = self.lin1(obv)
+    def forward(self, visual_obv, perception_module):
+        assert visual_obv.size() != 2 # To filter dof-obvs
+        if(visual_obv.size([-1]) != self.state_dim):
+            visual_obv = perception_module(visual_obv, None)
+        output = self.lin1(visual_obv)
         output = self.relu(output)
         return output
 
@@ -65,12 +66,12 @@ class PlanRecognizerModule(torch.nn.Module):
         NOTE : Pass a single trajectory [[[Ot/st, at], ... K]] only, where Ot = [Vobv, DOF].
         NOTE : Trajectory shape : (1, K, 2)
     '''
-    def __init__(self, sequence_length, state_dim=72, latent_size=256):
+    def __init__(self, sequence_length, state_dim=72, latent_dim=256):
         super(self, PlanRecognizerModule).__init__()
         self.sequence_length = sequence_length
         self.state_dim = state_dim
-        self.latent_size = latent_size
-        self.seqvae = SeqVAE(self.sequence_length, self.state_dim, latent_size=self.latent_size)
+        self.latent_dim = latent_dim
+        self.seqVae = SeqVAE(self.sequence_length, self.state_dim, latent_size=self.latent_dim)
 
     def forward(self, trajectory, perception_module):
         assert trajectory.size()[0] == 1 and trajectory.size()[1] == self.sequence_length
@@ -82,16 +83,30 @@ class PlanRecognizerModule(torch.nn.Module):
         for i in self.sequence_length:
             trajectory[0][i] = torch.cat((trajectory[0][i][0], trajectory[0][i][1]), -1)
 
-        z, mean, logv = self.seqvae(trajectory)
+        z, mean, logv = self.seqVae(trajectory)
         return z, mean, logv
 
 class PlanProposerModule(torch.nn.Module):
-    ''' TODO
+    ''' 
         A ConditionalVAE which maps initial state s_0 and goal z to latent space z_p ~ p(z_p|s_0, z)
     '''
-    def __init__(self):
+    def __init__(self, state_dim=72, goal_dim=2048, latent_dim=256):
         super(self, PlanProposerModule).__init__()
-        pass
+        self.state_dim = state_dim
+        self.goal_dim = goal_dim
+        self.latent_dim = latent_dim
+        self.cVae = ConditionalVAE(state_size + goal_dim, latent_dim)
+
+    def forward(self, initial_obv, goal_obv, perception_module, goal_encoder):
+        if initial_obv.size()[-1] != self.state_dim:
+            visual_obv, dof_obv = initial_obv
+            initial_obv = perception_module(visual_obv, dof_obv)
+
+        if goal_obv.size()[-1] != self.goal_dim:
+            goal_obv = goal_encoder(goal_obv, perception_module)
+
+        z, mean, logv = self.cVae(initial_obv, goal_obv)
+        return z, mean, logv
 
 class ControlModule(torch.nn.Module):
     ''' TODO
