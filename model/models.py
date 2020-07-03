@@ -130,7 +130,7 @@ class PlanProposerModule(torch.nn.Module):
         return z, mean, logv
 
 class ControlModule(torch.nn.Module):
-    ''' TODO
+    ''' 
         RNN based goal (z), z_p conditioned policy : a_t ~ \pi(a_t | s_t, z, z_p).
     '''
     def __init__(self, perception_module, action_dim=8, state_dim=72, goal_dim=32, latent_dim=256,
@@ -180,28 +180,28 @@ class ControlModule(torch.nn.Module):
         self.h1 = self.relu(self.rnn1(obs, self.h1)) 
         self.h2 = self.relu(self.rnn2(self.h1, self.h2))
 
-        mu = self.tanh(self.hidden2mean(self.h2))
+        mean = self.tanh(self.hidden2mean(self.h2))
         std = torch.exp(self.log_std)
-        return torch.distributions.normal(mu, std)
+        return torch.distributions.normal(mean, std)
 
-    def _log_prob_from_distribution(self, pi, act):
-        return pi.log_prob(act).sum(axis=-1) 
+    def _log_prob_from_distribution(self, policy, action):
+        return policy.log_prob(action).sum(axis=-1) 
 
     def forward(self, state, goal, zp, goal_encoder, action=None):
         obs = self._prepare_obs(state, goal, zp, goal_encoder)
-        pi = self._distribution(obs)
+        policy = self._distribution(obs)
         
         logp_a = None
         if action is not None:
-            logp_a = self._log_prob_from_distribution(pi, action)
+            logp_a = self._log_prob_from_distribution(policy, action)
 
-        return pi, logp_a
+        return policy, logp_a
 
     def step(self, state, goal, zp, goal_encoder):
         with torch.no_grad():
             obs = self._prepare_obs(state, goal, zp, goal_encoder)
-            pi = self._distribution(obs)
-            action = pi.sample()
-            logp_a = self._log_prob_from_distribution(pi, action)
+            policy = self._distribution(obs)
+            action = policy.sample()
+            logp_a = self._log_prob_from_distribution(policy, action)
 
         return action.numpy(), logp_a.numpy()
