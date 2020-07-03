@@ -65,7 +65,7 @@ class ConditionalVAE(torch.nn.Module):
             self.encoder_network.add_module(torch.nn.ReLU())
 
         self.hidden2mean = torch.nn.Linear(self.layer_sizes[-1], self.latent_size)
-        self.hidden2logv = torch.nn.Linear(self.layer_sizes[-1], self.latent_size)
+        self.hidden2logv = torch.nn.Linear(self.layer_sizes[-1], self.latent_size) # TODO : Maybe keep logstd fixed
         self.softplus = torch.nn.Softplus() # TODO : Check w/ Softplus
 
         if self.decoder:
