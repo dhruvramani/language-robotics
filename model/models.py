@@ -13,7 +13,7 @@ class PerceptionModule(torch.nn.Module):
         TODO : Normalize proprioception to have zero mean and unit variance.
     '''
     def __init__(self, visual_obv_dim=[200, 200, 3], dof_obv_dim=[8], state_dim=64):
-        super(self, PerceptionModule).__init__()
+        super(PerceptionModule, self).__init__()
         
         self.visual_obv_dim = visual_obv_dim
         self.dof_obv_dim = dof_obv_dim
@@ -51,7 +51,7 @@ class VisualGoalEncoder(torch.nn.Module):
         + NOTE Pass only the visual observation.
     '''
     def __init__(self, perception_module, state_dim=64, goal_dim=32):
-        super(self, VisualGoalEncoder).__init__()
+        super(VisualGoalEncoder, self).__init__()
 
         self.state_dim = state_dim
         self.goal_dim = goal_dim
@@ -82,7 +82,7 @@ class PlanRecognizerModule(torch.nn.Module):
         NOTE : Trajectory shape : (1, K, 2) (Batch Size = 1).
     '''
     def __init__(self, sequence_length, perception_module, state_dim=72, latent_dim=256):
-        super(self, PlanRecognizerModule).__init__()
+        super(PlanRecognizerModule, self).__init__()
         self.sequence_length = sequence_length
         self.state_dim = state_dim
         self.latent_dim = latent_dim
@@ -108,8 +108,8 @@ class PlanProposerModule(torch.nn.Module):
         A ConditionalVAE which maps initial state s_0 and goal z to latent space z_p ~ p(z_p|s_0, z).
         Represents a prior over z_p.
     '''
-    def __init__(self, goal_encoder, perception_module, state_dim=72, goal_dim=32, latent_dim=256):
-        super(self, PlanProposerModule).__init__()
+    def __init__(self, perception_module, state_dim=72, goal_dim=32, latent_dim=256):
+        super(PlanProposerModule, self).__init__()
         self.state_dim = state_dim
         self.goal_dim = goal_dim
         self.latent_dim = latent_dim
@@ -136,7 +136,7 @@ class ControlModule(torch.nn.Module):
     def __init__(self, perception_module, action_dim=8, state_dim=72, goal_dim=32, latent_dim=256,
                  hidden_size=2048, batch_size=1, rnn_type='RNN', num_layers=2,
                  mix_size=10, ):
-        super(self, ControlModule).__init__()
+        super(ControlModule, self).__init__()
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.goal_dim = goal_dim

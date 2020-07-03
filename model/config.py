@@ -11,9 +11,9 @@ def str2list(string):
 
 def get_model_args(parser=None):
     
-    isParser = False
+    isParser = True
     if parser is None : 
-        isParser = True
+        isParser = False
         parser = argparse.ArgumentParser("Model for language based robotics",
                             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # TODO

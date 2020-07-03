@@ -47,7 +47,7 @@ class ConditionalVAE(torch.nn.Module):
         + layers_size : list of dims for diff layers of the encoder.
     '''
     def __init__(self, input_size, latent_size=256, layers_size=[2048] * 4, decoder=False):
-        super(self, ConditionalVAE).__init__()
+        super(ConditionalVAE, self).__init__()
         self.input_size = self.input_size
         self.latent_size = self.latent_size
         self.layers_size = self.layers_size
@@ -104,7 +104,7 @@ class SeqVAE(torch.nn.Module):
         Input sequence shape : (batch, seq, feature)
     '''
     def __init__(self, max_sequence_length, input_size, latent_size=256, hidden_size=2048, rnn_type='RNN', decoder=False, num_layers=2, bidirectional=True):
-        super(self, ConditionalSeqVAE).__init__()
+        super(ConditionalSeqVAE, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.latent_size = latent_size
