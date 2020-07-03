@@ -1,7 +1,20 @@
 import numpy as np
 import torch
 import torch.nn.Functional as F
+from torch.distributions.normal import Normal
 from layers import SpatialSoftmax, ConditionalVAE, SeqVAE
+
+'''
+    > D consists  of  paired  {(O_t, a_t)}
+        > O_t is the set of observations from each of the robot’s N sensory channels. 
+        > In our experiments, O= {I, p}.
+            > I = an RGB image observation from a fixed first-person viewpoint.
+            > p = the internal 8-DOF proprioceptive state of the agent.
+
+    > Since our logs are raw observations, 
+      we define one encoder per sensory channel for N high-dimensional observations to one low-dimensional fused state
+        s_t = concat([E_1(o1); ... ; E_N(o_N)]) 
+'''
 
 class PerceptionModule(torch.nn.Module):
     '''
@@ -57,10 +70,11 @@ class VisualGoalEncoder(torch.nn.Module):
         self.lin3 = torch.nn.Linear(2048, goal_dim)
         # TODO : Might have to model it as a gaussian distribution. 
 
-    def forward(self, visual_obv, perception_module):
+    def forward(self, visual_obv, perception_module=None):
         if visual_obv.size() == 2 # To filter dof-obvs
             visual_obv = visual_obv[0]
         if(visual_obv.size([-1]) != self.state_dim):
+            assert perception_module is not None
             visual_obv = perception_module(visual_obv, None)
         output = self.relu(self.lin1(visual_obv))
         output = self.relu(self.lin2(output))
@@ -75,23 +89,23 @@ class PlanRecognizerModule(torch.nn.Module):
         NOTE : Pass a *single* trajectory [[[Ot/st, at], ... K]] only, where Ot = [Vobv, DOF].
         NOTE : Trajectory shape : (1, K, 2) (Batch Size = 1).
     '''
-    def __init__(self, sequence_length, state_dim=72, latent_dim=256):
+    def __init__(self, max_sequence_length, state_dim=72, latent_dim=256):
         super(PlanRecognizerModule, self).__init__()
-        self.sequence_length = sequence_length
+        self.max_sequence_length = max_sequence_length
         self.state_dim = state_dim
         self.latent_dim = latent_dim
 
-        self.seqVae = SeqVAE(self.sequence_length, self.state_dim, latent_size=self.latent_dim)
+        self.seqVae = SeqVAE(self.max_sequence_length, self.state_dim, latent_size=self.latent_dim)
 
-    def forward(self, trajectory, perception_module):
-        assert trajectory.size()[0] == 1 and trajectory.size()[1] == self.sequence_length
-        if trajectory[0][0][0].size()[-1] != self.state_dim:
-            for i in self.sequence_length:
-                visual_obv, dof_obv = trajectory[0][i][0]
-                trajectory[0][i][0] = perception_module(visual_obv, dof_obv)
+    def forward(self, trajectory, perception_module=None):
+        assert trajectory.size()[0] == 1 and trajectory.size()[1] <= self.max_sequence_length
+        
+        if trajectory[0, 0, 0].size()[-1] != self.state_dim:
+            assert perception_module is not None
+            visual_obvs, dof_obvs = trajectory[0, :, 0]
+            trajectory[0, :, 0] = perception_module(visual_obv, dof_obv)
 
-        for i in self.sequence_length:
-            trajectory[0][i] = torch.cat((trajectory[0][i][0], trajectory[0][i][1]), -1)
+        trajectory[0, :] = torch.cat((trajectory[0, :, 0], trajectory[0, :, 1]), -1)
 
         z, mean, logv = self.seqVae(trajectory)
         return z, mean, logv
@@ -109,12 +123,14 @@ class PlanProposerModule(torch.nn.Module):
 
         self.cVae = ConditionalVAE(state_size + goal_dim, latent_dim)
 
-    def forward(self, initial_obv, goal_obv, goal_encoder, perception_module):
+    def forward(self, initial_obv, goal_obv, goal_encoder=None, perception_module=None):
         if initial_obv.size()[-1] != self.state_dim:
+            assert perception_module is not None
             visual_obv, dof_obv = initial_obv
             initial_obv = perception_module(visual_obv, dof_obv)
 
         if goal_obv.size()[-1] != self.goal_dim:
+            assert goal_encoder is not None
             if(type(goal_encoder) == VisualGoalEncoder):
                 goal_obv = goal_encoder(goal_obv, perception_module)
 
@@ -126,8 +142,7 @@ class ControlModule(torch.nn.Module):
         RNN based goal (z), z_p conditioned policy : a_t ~ \pi(a_t | s_t, z, z_p).
     '''
     def __init__(self, action_dim=8, state_dim=72, goal_dim=32, latent_dim=256,
-                 hidden_size=2048, batch_size=1, rnn_type='RNN', num_layers=2,
-                 mix_size=10, ):
+                 hidden_size=2048, batch_size=1, rnn_type='RNN', num_layers=2):
         super(ControlModule, self).__init__()
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -158,8 +173,10 @@ class ControlModule(torch.nn.Module):
 
     def _prepare_obs(self, state, goal, zp, goal_encoder, perception_module):
         if state.size()[-1] != self.state_dim:
+            assert perception_module is not None
             state = perception_module(state)
         if goal.size()[-1] != self.goal_dim:
+            assert goal_encoder is not None
             if(type(goal_encoder) == VisualGoalEncoder):
                 goal = goal_encoder(goal, perception_module)
 
@@ -172,13 +189,13 @@ class ControlModule(torch.nn.Module):
 
         mean = self.tanh(self.hidden2mean(self.h2))
         std = torch.exp(self.log_std)
-        return torch.distributions.normal(mean, std)
+        return Normal(mean, std)
 
     def _log_prob_from_distribution(self, policy, action):
         return policy.log_prob(action).sum(axis=-1) 
 
-    def forward(self, state, goal, zp, goal_encoder, action=None):
-        obs = self._prepare_obs(state, goal, zp, goal_encoder)
+    def forward(self, state, goal, zp, action=None, goal_encoder=None, perception_module=None):
+        obs = self._prepare_obs(state, goal, zp, goal_encoder, perception_module)
         policy = self._distribution(obs)
         
         logp_a = None
@@ -187,7 +204,7 @@ class ControlModule(torch.nn.Module):
 
         return policy, logp_a
 
-    def step(self, state, goal, zp, goal_encoder):
+    def step(self, state, goal, zp, goal_encoder=None, perception_module=None):
         with torch.no_grad():
             obs = self._prepare_obs(state, goal, zp, goal_encoder)
             policy = self._distribution(obs)
