@@ -3,10 +3,6 @@ import torch
 import torch.nn.Functional as F
 from layers import SpatialSoftmax, ConditionalVAE, SeqVAE
 
-# NOTE > `self.perception_module` and other `torch.nn.Module`s passed as args
-#       All variables assigned point to the same memory location in Python.
-#       So when the original object is modified, even the assigned value get's modified (eg. by the grad).
-
 class PerceptionModule(torch.nn.Module):
     '''
         Maps raw observation (image & proprioception) O_t to a low dimension embedding s_t. 
@@ -50,7 +46,7 @@ class VisualGoalEncoder(torch.nn.Module):
         + NOTE First pass through the PerceptionModule to get s_g = P(O_{-1}).
         + NOTE Pass only the visual observation.
     '''
-    def __init__(self, perception_module, state_dim=64, goal_dim=32):
+    def __init__(self, state_dim=64, goal_dim=32):
         super(VisualGoalEncoder, self).__init__()
 
         self.state_dim = state_dim
@@ -61,13 +57,11 @@ class VisualGoalEncoder(torch.nn.Module):
         self.lin3 = torch.nn.Linear(2048, goal_dim)
         # TODO : Might have to model it as a gaussian distribution. 
 
-        self.perception_module = perception_module
-
-    def forward(self, visual_obv):
+    def forward(self, visual_obv, perception_module):
         if visual_obv.size() == 2 # To filter dof-obvs
             visual_obv = visual_obv[0]
         if(visual_obv.size([-1]) != self.state_dim):
-            visual_obv = self.perception_module(visual_obv, None)
+            visual_obv = perception_module(visual_obv, None)
         output = self.relu(self.lin1(visual_obv))
         output = self.relu(self.lin2(output))
         output = self.lin3(output)
@@ -81,21 +75,20 @@ class PlanRecognizerModule(torch.nn.Module):
         NOTE : Pass a *single* trajectory [[[Ot/st, at], ... K]] only, where Ot = [Vobv, DOF].
         NOTE : Trajectory shape : (1, K, 2) (Batch Size = 1).
     '''
-    def __init__(self, sequence_length, perception_module, state_dim=72, latent_dim=256):
+    def __init__(self, sequence_length, state_dim=72, latent_dim=256):
         super(PlanRecognizerModule, self).__init__()
         self.sequence_length = sequence_length
         self.state_dim = state_dim
         self.latent_dim = latent_dim
 
-        self.perception_module = perception_module
         self.seqVae = SeqVAE(self.sequence_length, self.state_dim, latent_size=self.latent_dim)
 
-    def forward(self, trajectory):
+    def forward(self, trajectory, perception_module):
         assert trajectory.size()[0] == 1 and trajectory.size()[1] == self.sequence_length
         if trajectory[0][0][0].size()[-1] != self.state_dim:
             for i in self.sequence_length:
                 visual_obv, dof_obv = trajectory[0][i][0]
-                trajectory[0][i][0] = self.perception_module(visual_obv, dof_obv)
+                trajectory[0][i][0] = perception_module(visual_obv, dof_obv)
 
         for i in self.sequence_length:
             trajectory[0][i] = torch.cat((trajectory[0][i][0], trajectory[0][i][1]), -1)
@@ -108,23 +101,22 @@ class PlanProposerModule(torch.nn.Module):
         A ConditionalVAE which maps initial state s_0 and goal z to latent space z_p ~ p(z_p|s_0, z).
         Represents a prior over z_p.
     '''
-    def __init__(self, perception_module, state_dim=72, goal_dim=32, latent_dim=256):
+    def __init__(self, state_dim=72, goal_dim=32, latent_dim=256):
         super(PlanProposerModule, self).__init__()
         self.state_dim = state_dim
         self.goal_dim = goal_dim
         self.latent_dim = latent_dim
 
-        self.perception_module = perception_module
         self.cVae = ConditionalVAE(state_size + goal_dim, latent_dim)
 
-    def forward(self, initial_obv, goal_obv, goal_encoder):
+    def forward(self, initial_obv, goal_obv, goal_encoder, perception_module):
         if initial_obv.size()[-1] != self.state_dim:
             visual_obv, dof_obv = initial_obv
-            initial_obv = self.perception_module(visual_obv, dof_obv)
+            initial_obv = perception_module(visual_obv, dof_obv)
 
         if goal_obv.size()[-1] != self.goal_dim:
             if(type(goal_encoder) == VisualGoalEncoder):
-                goal_obv = goal_encoder(goal_obv, self.perception_module)
+                goal_obv = goal_encoder(goal_obv, perception_module)
 
         z, mean, logv = self.cVae(initial_obv, goal_obv)
         return z, mean, logv
@@ -133,7 +125,7 @@ class ControlModule(torch.nn.Module):
     ''' 
         RNN based goal (z), z_p conditioned policy : a_t ~ \pi(a_t | s_t, z, z_p).
     '''
-    def __init__(self, perception_module, action_dim=8, state_dim=72, goal_dim=32, latent_dim=256,
+    def __init__(self, action_dim=8, state_dim=72, goal_dim=32, latent_dim=256,
                  hidden_size=2048, batch_size=1, rnn_type='RNN', num_layers=2,
                  mix_size=10, ):
         super(ControlModule, self).__init__()
@@ -150,8 +142,6 @@ class ControlModule(torch.nn.Module):
         assert self.rnn_type in ['LSTM', 'GRU', 'RNN']
         self.rnn = {'LSTM' : torch.nn.LSTMCell, 'GRU' : torch.nn.GRUCell, 'RNN' : torch.nn.RNNCell}[self.rnn_type]
 
-        self.perception_module = perception_module
-
         self.rnn1 = self.rnn(self.input_dim, self.hidden_size)
         self.rnn2 = self.rnn(self.hidden_size, self.hidden_size)
 
@@ -166,12 +156,12 @@ class ControlModule(torch.nn.Module):
         self.relu = torch.nn.ReLU()
         self.tanh = torch.nn.Tah()
 
-    def _prepare_obs(self, state, goal, zp, goal_encoder):
+    def _prepare_obs(self, state, goal, zp, goal_encoder, perception_module):
         if state.size()[-1] != self.state_dim:
-            state = self.perception_module(state)
+            state = perception_module(state)
         if goal.size()[-1] != self.goal_dim:
             if(type(goal_encoder) == VisualGoalEncoder):
-                goal = goal_encoder(goal, self.perception_module)
+                goal = goal_encoder(goal, perception_module)
 
         obs = torch.cat((state, goal, zp), -1)
         return obs
