@@ -8,6 +8,7 @@ from tensorboardX import SummaryWriter
 import utils
 from models import *
 
+# NOTE : If in future, you operate on bigger hardwares - move to PyTorch Lightning
 device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
 
 def train_visual_goals(env_fn, dataset, config):
@@ -20,6 +21,7 @@ def train_visual_goals(env_fn, dataset, config):
 
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
+    tensorboard_writer = SummaryWriter()
 
     env, obs_dims, act_dim = env_fn()
 
@@ -34,22 +36,36 @@ def train_visual_goals(env_fn, dataset, config):
     params += list(control_module.parameters())
     print("Number of parameters : {}".format(len(params)))
 
+    if(config.save_graphs):
+        tensorboard_writer.add_graph(perception_module)
+        tensorboard_writer.add_graph(visual_goal_encoder)
+        tensorboard_writer.add_graph(plan_recognizer)
+        tensorboard_writer.add_graph(plan_proposer)
+        tensorboard_writer.add_graph(control_module)
+
     kl_loss = torch.nn.KLDivLoss()
     optimizer = torch.optim.Adam(params, lr=config.learning_rate)
 
-    # TODO : Change code to make it work with bigger batch-sizes.
+    if(config.resume):
+        perception_module.load_state_dict(torch.load(os.path.join(config.save_path, 'perception.pth')))
+        visual_goal_encoder.load_state_dict(torch.load(os.path.join(config.save_path, 'visual_goal.pth')))
+        plan_recognizer.load_state_dict(torch.load(os.path.join(config.save_path, 'plan_recognizer.pth')))
+        plan_proposer.load_state_dict(torch.load(os.path.join(config.save_path, 'plan_proposer.pth')))
+        control_module.load_state_dict(torch.load(os.path.join(config.save_path, 'control_module.pth')))
+        optimizer.load_state_dict(torch.load(os.path.join(config.save_path, 'optimizer.pth')))
+
+    # TODO *IMPORTANT* : Change code to make it work with bigger batch-sizes. 
     # TODO : Put the random trajectory size setting in dataset.py    
     data_loader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=1)
-    tensorboard_writer = SummaryWriter()
 
-    for epoch in tqdm(range(config.max_epochs), desc="Epochs"):
+    for epoch in tqdm(range(config.max_epochs), desc="Check Tensorboard"):
         for i, trajectory in enumerate(data_loader):
             trajectory = torch.FloatTensor(trajectory).to(device)
 
             assert trajectory.size()[0] == 1 and trajectory.size()[-1] == 2 
             # Batch size = 1, last-dim = 2 as (state, action)
 
-            last_obvs, last_action = trajectory[0, -1, :]
+            last_obvs, _ = trajectory[0, -1, :]
             assert last_obvs.size()[0] == config.num_obv_types
             goal_state = perception_module(last_obvs[0])
             goal_state = visual_goal_encoder(goal_state)
@@ -72,9 +88,24 @@ def train_visual_goals(env_fn, dataset, config):
             loss = loss_pi + config.beta * loss_zp
             loss = loss.mean()
 
+            tensorboard_writer.add_scalar('Policy Loss', loss_pi)
+            tensorboard_writer.add_scalar('KL Loss', loss_zp)
+            tensorboard_writer.add_scalar('Total Loss', loss)
+
             loss.backward()
             optimizer.step()
 
+            if int(i % config.save_interval) == 0:
+                torch.save(perception_module.state_dict(), os.path.join(config.save_path, 'perception.pth'))
+                torch.save(visual_goal_encoder.state_dict(), os.path.join(config.save_path, 'visual_goal.pth'))
+                torch.save(plan_recognizer.state_dict(), os.path.join(config.save_path, 'plan_recognizer.pth'))
+                torch.save(plan_proposer.state_dict(), os.path.join(config.save_path, 'plan_proposer.pth'))
+                torch.save(control_module.state_dict(), os.path.join(config.save_path, 'control_module.pth'))
+                torch.save(optimizer.state_dict(), os.path.join(config.save_path, 'optimizer.pth'))
+
+
+
+ 
 
 
 
