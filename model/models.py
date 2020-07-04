@@ -28,14 +28,14 @@ class PerceptionModule(torch.nn.Module):
         self.dof_obv_dim = dof_obv_dim
         self.state_dim = state_dim
 
-        assert self.visual_obv_dim[0] == self.visual_obv_dim[1]
+        assert visual_obv_dim[0] == visual_obv_dim[1]
 
         self.conv1 = torch.nn.Conv2d(3, 32, kernel_size=(8, 8), stride=4, padding=2)
         self.conv2 = torch.nn.Conv2d(32, 64, kernel_size=(4, 4), stride=2)
         self.conv3 = torch.nn.Conv2d(64, 64, kernel_size=(3, 3), stride=1)
         self.ss = SpatialSoftmax(22, 22, 64)
         self.lin1 = torch.nn.Linear(22 * 22* 64, 512)
-        self.lin2 = torch.nn.Linear(512, self.state_dim)
+        self.lin2 = torch.nn.Linear(512, state_dim)
         self.relu = torch.nn.ReLU()
 
     def forward(self, visual_obv, dof_obv=None):
@@ -65,10 +65,10 @@ class VisualGoalEncoder(torch.nn.Module):
         self.state_dim = state_dim
         self.goal_dim = goal_dim
         self.lin1 = torch.nn.Linear(state_dim, 2048)
-        self.relu = torch.nn.ReLU()
         self.lin2 = torch.nn.Linear(2048, 2048)
         self.lin3 = torch.nn.Linear(2048, goal_dim)
-        # TODO : Might have to model it as a gaussian distribution. 
+        self.relu = torch.nn.ReLU()
+        # TODO *IMPORTANT* : Might have to model it as a gaussian distribution. 
 
     def forward(self, visual_obv, perception_module=None):
         if visual_obv.size() == 2 # To filter dof-obvs
@@ -95,7 +95,7 @@ class PlanRecognizerModule(torch.nn.Module):
         self.state_dim = state_dim
         self.latent_dim = latent_dim
 
-        self.seqVae = SeqVAE(self.max_sequence_length, self.state_dim, latent_size=self.latent_dim)
+        self.seqVae = SeqVAE(max_sequence_length, state_dim, latent_size=latent_dim)
 
     def forward(self, trajectory, perception_module=None):
         assert trajectory.size()[0] == 1 and trajectory.size()[1] <= self.max_sequence_length
@@ -121,7 +121,7 @@ class PlanProposerModule(torch.nn.Module):
         self.goal_dim = goal_dim
         self.latent_dim = latent_dim
 
-        self.cVae = ConditionalVAE(state_size + goal_dim, latent_dim)
+        self.cVae = ConditionalVAE(state_dim + goal_dim, latent_dim)
 
     def forward(self, initial_obv, goal_obv, goal_encoder=None, perception_module=None):
         if initial_obv.size()[-1] != self.state_dim:

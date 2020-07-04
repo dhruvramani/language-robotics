@@ -21,8 +21,8 @@ class SpatialSoftmax(torch.nn.Module):
             self.temperature = 1.
 
         pos_x, pos_y = np.meshgrid(np.linspace(-1., 1., self.height), np.linspace(-1., 1., self.width))
-        pos_x = torch.from_numpy(pos_x.reshape(self.height * self.width)).float()
-        pos_y = torch.from_numpy(pos_y.reshape(self.height * self.width)).float()
+        pos_x = torch.FloatTensor(pos_x.reshape(self.height * self.width))
+        pos_y = torch.FloatTensor(pos_y.reshape(self.height * self.width))
         self.register_buffer('pos_x', pos_x)
         self.register_buffer('pos_y', pos_y)
 
