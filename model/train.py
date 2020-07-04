@@ -19,17 +19,14 @@ def train_visual_goals(env_fn, dataset, config):
             Extract the final observation in T as the synthetic goal state O_g and encode it : s_g.  
     '''
 
-    torch.manual_seed(config.seed)
-    np.random.seed(config.seed)
     tensorboard_writer = SummaryWriter()
-
     env, obs_dims, act_dim = env_fn()
 
-    perception_module = PerceptionModule(obs_dims[0], obs_dims[1]).to(device)
-    visual_goal_encoder = VisualGoalEncoder().to(device)
-    plan_recognizer = PlanRecognizerModule(config.max_sequence_length).to(device)
-    plan_proposer = PlanProposerModule().to(device)
-    control_module = ControlModule(act_dim).to(device)
+    perception_module = PerceptionModule(obs_dims[0], obs_dims[1], config.visual_state_dim).to(device)
+    visual_goal_encoder = VisualGoalEncoder(config.visual_state_dim, config.goal_dim).to(device)
+    plan_recognizer = PlanRecognizerModule(config.max_sequence_length, config.combined_state_dim, config.latent_dim).to(device)
+    plan_proposer = PlanProposerModule(config.combined_state_dim, config.goal_dim, config.latent_dim).to(device)
+    control_module = ControlModule(act_dim, config.combined_state_dim, config.goal_dim, config.latent_dim).to(device)
 
     params = list(perception_module.parameters()) + list(visual_goal_encoder.parameters())
     params += list(plan_recognizer.parameters()) + list(plan_proposer.parameters())
