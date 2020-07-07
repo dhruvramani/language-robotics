@@ -4,7 +4,7 @@ import torch
 import torch.nn.Functional as F
 
 import utils
-from config import get_model_args
+from model_config import get_model_args
 from train import train_visual_goals
 from test import test_experiment
 from data_env import DataEnvGroup
