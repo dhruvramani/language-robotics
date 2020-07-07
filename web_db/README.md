@@ -1,4 +1,14 @@
+## TODO 
+Run :
+```
+pip install django-polymorphic
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py syncdb
+python manage.py migrate traj_db
 
+```
++ Each env has it's own seperate table to store data.
 + 2 Apps :
   - `traj_db` : Contains the main meta-data DB to store the trajectories. Stores the language/instruction schema too.
   - `hindsight_instruction` : Web-App to play trajectories and store instructions.

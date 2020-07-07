@@ -36,8 +36,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'traj_db',
-    'hindsight_instruction'
+    'traj_db.apps.TrajDbConfig',
+    'hindsight_instruction.apps.HindsightInstructionConfig',
+    'polymorphic',
+    'django.contrib.contenttypes',
 ]
 
 MIDDLEWARE = [
