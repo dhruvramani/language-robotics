@@ -31,7 +31,7 @@ class Trajectory(PolymorphicModel):
             - episode_id: A UUID to identify the trajectory.
             - traj_count: The index number to this trajectory.
             = env_id: An identifier for the environment. Usually, the environment name.
-            - task_id: A human readable name for the task corresponding to the behavior in the trajectory.
+            - task_id: Stores config.env_type - corresponding to the behavior in the trajectory.
             - data_path: Filename holding the trajectory data for this episode.
             - is_archived: Wether the trajectory is present in a tar.gz file or not
             - time_stamp: Unix timestamp recording when the trajectory was generated.

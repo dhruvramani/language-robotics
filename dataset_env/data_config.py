@@ -40,7 +40,7 @@ def get_dataset_args():
     config = parser.parse_args()
     config.traj_db = env2TrajDB(config.env)
     config.instruct_db = env2InstructDB(config.env)
-    config.data_path = os.path.join(config.data_path, '{}/'.format(config.env)) 
-    config.archives_path = os.path.join(config.archives_path, '{}/'.format(config.env)) 
+    config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
+    config.archives_path = os.path.join(config.archives_path, '{}_{}/'.format(config.env, config.env_type)) 
 
     return config

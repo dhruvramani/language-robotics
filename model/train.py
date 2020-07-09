@@ -11,7 +11,7 @@ from models import *
 # NOTE : If in future, you operate on bigger hardwares - move to PyTorch Lightning
 device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
 
-def train_visual_goals(env_fn, dataset, config):
+def train_visual_goals(deg, config):
     '''
         > Train on batches of random play sequences : 
             For each training batch and each batch sequence element: 
@@ -20,7 +20,8 @@ def train_visual_goals(env_fn, dataset, config):
     '''
 
     tensorboard_writer = SummaryWriter(logdir=config.tensorboard_path)
-    env, obs_dims, act_dim = env_fn()
+    env = deg.get_env()
+    obs_dims, act_dim = deg.obs_space['camera'], deg.action_space # TODO : DEBUG here
 
     perception_module = PerceptionModule(obs_dims[0], obs_dims[1], config.visual_state_dim).to(device)
     visual_goal_encoder = VisualGoalEncoder(config.visual_state_dim, config.goal_dim).to(device)
@@ -51,9 +52,8 @@ def train_visual_goals(env_fn, dataset, config):
         control_module.load_state_dict(torch.load(os.path.join(config.models_save_path, 'control_module.pth')))
         optimizer.load_state_dict(torch.load(os.path.join(config.models_save_path, 'optimizer.pth')))
 
-    # TODO *IMPORTANT* : Change code to make it work with bigger batch-sizes. 
-    # TODO : Put the random trajectory size setting in dataset.py    
-    data_loader = DataLoader(dataset, batch_size=config.batch_size, shuffle=True, num_workers=1)
+    # TODO *IMPORTANT* : Change code to make it work with bigger batch-sizes.  
+    data_loader = DataLoader(deg.dataset, batch_size=config.batch_size, shuffle=True, num_workers=1)
 
     for epoch in tqdm(range(config.max_epochs), desc="Check Tensorboard"):
         for i, trajectory in enumerate(data_loader):
@@ -100,10 +100,4 @@ def train_visual_goals(env_fn, dataset, config):
                 torch.save(plan_proposer.state_dict(), os.path.join(config.models_save_path, 'plan_proposer.pth'))
                 torch.save(control_module.state_dict(), os.path.join(config.models_save_path, 'control_module.pth'))
                 torch.save(optimizer.state_dict(), os.path.join(config.models_save_path, 'optimizer.pth'))
-
-
-
- 
-
-
 

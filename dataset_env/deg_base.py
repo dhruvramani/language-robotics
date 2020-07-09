@@ -11,20 +11,12 @@ data_config = get_dataset_args()
 
 class DataEnvGroup(object):
     ''' + NOTE : Create subclass for every environment, eg.
-
-        class SurrealDataEnvGroup(DataEnvGroup):
-            def __init__(self):
-                super(SurrealDataEnvGroup, self).__init__()
-                assert self.env_name == 'SURREAL' # NOTE - Most important
-                ...
-
-            # Override get_env method
-            def get_env(self):
-                ...
+        Check `assert self.env_name == 'ENV_NAME'`
     '''
     def __init__(self):
         self.config = data_config
         self.env_name = self.config.env
+        self.env_type = self.config.env_type
         self.max_sequence_length = self.config.max_sequence_length
         self.dataset = TrajDataset()
 

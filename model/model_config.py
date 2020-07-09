@@ -29,8 +29,8 @@ def get_model_args():
     parser.add_argument('--latent_dim', type=int, default=256)
     
     config = parser.parse_args()
-    config.models_save_path = os.path.join(config.models_save_path, '{}-{}/'.format(config.env, config.exp_name)) 
-    config.tensorboard_path = os.path.join(config.tensorboard_path, '{}-{}/'.format(config.env, config.exp_name)) 
-    config.data_path = os.path.join(config.data_path, '{}/'.format(config.env)) 
+    config.models_save_path = os.path.join(config.models_save_path, '{}_{}_{}/'.format(config.env, config.env_type, config.exp_name)) 
+    config.tensorboard_path = os.path.join(config.tensorboard_path, '{}_{}_{}/'.format(config.env, config.env_type, config.exp_name)) 
+    config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
 
     return config

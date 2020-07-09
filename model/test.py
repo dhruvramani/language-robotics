@@ -2,8 +2,9 @@ import numpy
 import torch
 
 device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
-def test_experiment(env_fn, config):
-    env, obs_dims, act_dim = env_fn()
+def test_experiment(deg, config):
+    env = deg.get_env()
+    obs_dims, act_dim = deg.obs_space['camera'], deg.action_space # TODO : DEBUG here
 
     with torch.no_grad():
         perception_module = PerceptionModule(obs_dims[0], obs_dims[1], config.visual_state_dim).to(device)
