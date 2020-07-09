@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 
-sys.path.insert(1, os.path.join(sys.path[0], '../'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
 
 from global_config import *
 

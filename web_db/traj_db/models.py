@@ -59,7 +59,7 @@ class Trajectory(PolymorphicModel):
     self.task_id = models.CharField(max_length=20, null=True)
     self.env_id = models.CharField(max_length=50)
     self.time_stamp = models.TimeField(auto_now_add=True, auto_now=False)
-    self.data_path = models.CharField(max_length=80)
+    self.data_path = models.CharField(max_length=1024)
     self.is_archived = models.BooleanField(default=False)
     self.episode_type = models.CharField(max_length=30, choices=EPISODE_TYPE_CHOICES, default='EPISODE_ROBOT_PLAY')
     self.tag = models.ForeignKey(TrajectoryTag, on_delete=models.SET_NULL, null=True)
@@ -116,7 +116,7 @@ class ArchiveFile(models.Model):
     '''
     self.trajectory = models.ForeignKey(Trajectory, on_delete=models.CASCADE)
     self.env_id = models.CharField(max_length=50)
-    self.archive_file = models.CharField(max_length=80)
+    self.archive_file = models.CharField(max_length=1024)
 
     def __str__(self):
         return "{} : {}".format(self.trajectory_.episode_id, self.archive_file)

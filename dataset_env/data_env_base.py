@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.utils.data
 
-sys.path.insert(1, os.path.join(sys.path[0], '../web_db/traj_db/'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/traj_db/'))
 
 class DataEnvGroup(object):
     def __init__(self, env_name, )

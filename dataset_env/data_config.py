@@ -2,8 +2,8 @@ import os
 import sys
 import argparse
 
-sys.path.insert(1, os.path.join(sys.path[0], '../'))
-sys.path.insert(1, os.path.join(sys.path[0], '../web_db/traj_db/'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/traj_db/'))
 
 from global_config import *
 from models import SurrealRoboticsSuiteTrajectory, USCFurnitureTrajectory
@@ -21,6 +21,12 @@ def env2InstructDB(string):
     db_dict = {'SURREAL' : SurrealRoboticsSuiteInstruction, 'FURNITURE' : USCFurnitureInstruction}
     return db_dict[string.upper()]
 
+def ep_type(string):
+    ep_dict = {'play': 'EPISODE_ROBOT_PLAY', 'imitation': 'EPISODE_ROBOT_IMITATED',
+                'expert': 'EPISODE_ROBOT_EXPERT', 'policy': 'EPISODE_ROBOT_POLICY',
+                'exploration': 'EPISODE_ROBOT_EXPLORED'}
+    return ep_dict[string.lower()]
+
 def get_dataset_args():
     parser = get_global_parser()
 
@@ -29,10 +35,7 @@ def get_dataset_args():
     parser.add_argument('--instruct_db', type=env2InstructDB, default='SURREAL')
     parser.add_argument('--archives_path', type=str, default=os.path.join(BASE_DIR, 'data_files/archives'))
     parser.add_argument('--store_as', type=str, default='TorchTensor', choices=['TorchTensor', 'NumpyArray'])
-    
-    parser.add_argument('--episode_type', type=str, default='EPISODE_ROBOT_PLAY', 
-        choices=['EPISODE_ROBOT_PLAY', 'EPISODE_ROBOT_IMITATED', 'EPISODE_ROBOT_EXPERT', 
-        'EPISODE_ROBOT_POLICY', 'EPISODE_ROBOT_EXPLORED'])
+    parser.add_argument('--episode_type', type=ep_type, default='play', choices=['play', 'imitation', 'expert', 'policy', 'exploration'])
     
     config = parser.parse_args()
     config.traj_db = env2TrajDB(config.env)

@@ -6,7 +6,7 @@ import numpy as np
 from random import randint
 from data_config import get_dataset_args
 
-sys.path.insert(1, os.path.join(sys.path[0], '../web_db/traj_db/'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/traj_db/'))
 
 from models import ArchiveFile
 
@@ -23,6 +23,7 @@ def store_trajectoy(trajectory, task_id='', episode_type=config.episode_type):
 
     assert trajectory.shape[-1] == 2 # Check if (obvs, actions)
 
+    # NOTE : Current data_path is a placeholder. Edited below with UUID.
     metadata = config.traj_db(task_id=task_id, env_id=config.env, 
         data_path=config.data_path, episode_type=episode_type)
 
@@ -53,8 +54,8 @@ def get_trajectory(random=True, episode_id=None):
 
     return trajectory
 
-def archive_range(traj_range, file_name=None, episode_id_list=None):
-     ''' 
+def archive_traj_inrange(traj_range, file_name=None, episode_id_list=None):
+    ''' 
         NOTE : default file_name: `env + "_" + start_traj.episode_id + "_" + end_traj.episode_id + ".tar.gz`
         + Arguments:
             - traj_range: (start, end) - the trajectories to be archived.
@@ -66,6 +67,7 @@ def archive_range(traj_range, file_name=None, episode_id_list=None):
 
     if file_name is None:
         file_name = "{}_{}_{}.tar.gz".format(start_traj.env_id, start_traj.episode_id, end_traj.episode_id)
+    file_name = os.path.join(config.archives_path, file_name)
 
     tar = tarfile.open(file_name, "w:gz")
     for i in range(start, end):
