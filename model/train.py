@@ -19,7 +19,7 @@ def train_visual_goals(env_fn, dataset, config):
             Extract the final observation in T as the synthetic goal state O_g and encode it : s_g.  
     '''
 
-    tensorboard_writer = SummaryWriter()
+    tensorboard_writer = SummaryWriter(logdir=config.tensorboard_path)
     env, obs_dims, act_dim = env_fn()
 
     perception_module = PerceptionModule(obs_dims[0], obs_dims[1], config.visual_state_dim).to(device)
@@ -44,12 +44,12 @@ def train_visual_goals(env_fn, dataset, config):
     optimizer = torch.optim.Adam(params, lr=config.learning_rate)
 
     if(config.resume):
-        perception_module.load_state_dict(torch.load(os.path.join(config.save_path, 'perception.pth')))
-        visual_goal_encoder.load_state_dict(torch.load(os.path.join(config.save_path, 'visual_goal.pth')))
-        plan_recognizer.load_state_dict(torch.load(os.path.join(config.save_path, 'plan_recognizer.pth')))
-        plan_proposer.load_state_dict(torch.load(os.path.join(config.save_path, 'plan_proposer.pth')))
-        control_module.load_state_dict(torch.load(os.path.join(config.save_path, 'control_module.pth')))
-        optimizer.load_state_dict(torch.load(os.path.join(config.save_path, 'optimizer.pth')))
+        perception_module.load_state_dict(torch.load(os.path.join(config.models_save_path, 'perception.pth')))
+        visual_goal_encoder.load_state_dict(torch.load(os.path.join(config.models_save_path, 'visual_goal.pth')))
+        plan_recognizer.load_state_dict(torch.load(os.path.join(config.models_save_path, 'plan_recognizer.pth')))
+        plan_proposer.load_state_dict(torch.load(os.path.join(config.models_save_path, 'plan_proposer.pth')))
+        control_module.load_state_dict(torch.load(os.path.join(config.models_save_path, 'control_module.pth')))
+        optimizer.load_state_dict(torch.load(os.path.join(config.models_save_path, 'optimizer.pth')))
 
     # TODO *IMPORTANT* : Change code to make it work with bigger batch-sizes. 
     # TODO : Put the random trajectory size setting in dataset.py    
@@ -94,12 +94,12 @@ def train_visual_goals(env_fn, dataset, config):
             optimizer.step()
 
             if int(i % config.save_interval) == 0:
-                torch.save(perception_module.state_dict(), os.path.join(config.save_path, 'perception.pth'))
-                torch.save(visual_goal_encoder.state_dict(), os.path.join(config.save_path, 'visual_goal.pth'))
-                torch.save(plan_recognizer.state_dict(), os.path.join(config.save_path, 'plan_recognizer.pth'))
-                torch.save(plan_proposer.state_dict(), os.path.join(config.save_path, 'plan_proposer.pth'))
-                torch.save(control_module.state_dict(), os.path.join(config.save_path, 'control_module.pth'))
-                torch.save(optimizer.state_dict(), os.path.join(config.save_path, 'optimizer.pth'))
+                torch.save(perception_module.state_dict(), os.path.join(config.models_save_path, 'perception.pth'))
+                torch.save(visual_goal_encoder.state_dict(), os.path.join(config.models_save_path, 'visual_goal.pth'))
+                torch.save(plan_recognizer.state_dict(), os.path.join(config.models_save_path, 'plan_recognizer.pth'))
+                torch.save(plan_proposer.state_dict(), os.path.join(config.models_save_path, 'plan_proposer.pth'))
+                torch.save(control_module.state_dict(), os.path.join(config.models_save_path, 'control_module.pth'))
+                torch.save(optimizer.state_dict(), os.path.join(config.models_save_path, 'optimizer.pth'))
 
 
 

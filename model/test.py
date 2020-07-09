@@ -11,10 +11,10 @@ def test_experiment(env_fn, config):
         plan_proposer = PlanProposerModule(config.combined_state_dim, config.goal_dim, config.latent_dim).to(device)
         control_module = ControlModule(act_dim, config.combined_state_dim, config.goal_dim, config.latent_dim).to(device)
 
-        perception_module.load_state_dict(torch.load(os.path.join(config.save_path, 'perception.pth')))
-        visual_goal_encoder.load_state_dict(torch.load(os.path.join(config.save_path, 'visual_goal.pth')))
-        plan_proposer.load_state_dict(torch.load(os.path.join(config.save_path, 'plan_proposer.pth')))
-        control_module.load_state_dict(torch.load(os.path.join(config.save_path, 'control_module.pth')))
+        perception_module.load_state_dict(torch.load(os.path.join(config.models_save_path, 'perception.pth')))
+        visual_goal_encoder.load_state_dict(torch.load(os.path.join(config.models_save_path, 'visual_goal.pth')))
+        plan_proposer.load_state_dict(torch.load(os.path.join(config.models_save_path, 'plan_proposer.pth')))
+        control_module.load_state_dict(torch.load(os.path.join(config.models_save_path, 'control_module.pth')))
 
         obvs = env.reset()
         for i in range(config.n_test_evals):
