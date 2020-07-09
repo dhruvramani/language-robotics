@@ -22,7 +22,6 @@ def get_model_args():
     parser.add_argument('--n_test_evals', type=int, default=10)
     parser.add_argument('--max_test_timestep', type=int, default=40)
 
-    parser.add_argument('--max_sequence_length', type=int, default=32)
     parser.add_argument('--beta', type=float, default=0.01)
     parser.add_argument('--visual_state_dim', type=int, default=64)
     parser.add_argument('--combined_state_dim', type=int, default=72)

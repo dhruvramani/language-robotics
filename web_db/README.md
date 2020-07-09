@@ -5,7 +5,6 @@ pip install django-polymorphic
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py syncdb
-python manage.py migrate traj_db
 
 ```
 + Each env has it's own seperate table to store data.

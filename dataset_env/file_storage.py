@@ -37,10 +37,13 @@ def store_trajectoy(trajectory, task_id='', episode_type=config.episode_type):
         with open(metadata.data_path, 'wb') as file:
             np.save(file, trajectory)
 
-def get_trajectory(random=True, episode_id=None):
+def get_trajectory(random=True, index=None, episode_id=None):
     if random == False:
-        assert episode_id is not None
-        metadata = config.traj_db.objects.get(episode_id=episode_id)
+        assert episode_id is not None or index is not None
+        if index is not None:
+            metadata = config.traj_db.objects.get(traj_count=index)
+        elif episode_id is not None:
+            metadata = config.traj_db.objects.get(episode_id=episode_id)
     else :
         count = config.traj_db.objects.count()
         random_index = randint(1, count - 1)
