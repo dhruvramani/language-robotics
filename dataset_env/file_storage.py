@@ -4,7 +4,7 @@ import torch
 import tarfile
 import numpy as np
 from random import randint
-from data_config import get_dataset_args
+from data_config import get_dataset_args, ep_type
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/traj_db/'))
 
@@ -16,6 +16,9 @@ def store_trajectoy(trajectory, episode_type=config.episode_type):
     ''' Arguments:
         - trajectory: [[Ot/st, at], ... K] where Ot = [Vobv, DOF, ...]
     '''
+    if 'EPISODE_' not in episode_type:
+        episode_type = ep_type(episode_type)
+
     if config.store_as == 'TorchTensor':
         trajectory = torch.Tensor(trajectory).cpu()
     elif config.store_as == 'NumpyArray' and type(trajectory) == torch.Tensor:

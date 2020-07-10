@@ -1,14 +1,18 @@
-def myfunc(c, a=1, b=2):
-    print(a, b, c)
+import numpy as np
 
-mydict = {'a': 100, 'b': 200}
-myfunc(500, **mydict)
+vobs = np.ones((2, 2, 3))
+dof = np.zeros((8))
 
-import json
-env_args = dict(has_renderer=True, has_offscreen_renderer=True, ignore_done=True, use_camera_obs=True,  
-    camera_height=84, camera_width=84, camera_name='agentview', use_object_obs=False, reward_shaping=True)
+obs = np.array([vobs, dof])
+action = np.random.random([8])
+s_a1 = np.array([obs, action])
+s_a1 = np.expand_dims(s_a1, 0)
+print(s_a1)
+print(s_a1.shape)
+print(s_a1[0].shape)
 
-args = json.dumps(env_args)
-print(args)
-env_args = json.loads(args)
-print(env_args)
+s_a2 = np.array([obs, action])
+s_a2 = np.expand_dims(s_a2, 0)
+
+traj = np.concatenate((s_a1, s_a2), 0)
+print(traj.shape)

@@ -4,10 +4,11 @@ import torch
 device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
 def test_experiment(deg, config):
     env = deg.get_env()
-    obs_dims, act_dim = deg.obs_space['camera'], deg.action_space # TODO : DEBUG here
+    vobs_dim, dof_dim = deg.obs_space['image'], deg.obs_space['robot-state'] 
+    act_dim = deg.action_space # TODO : DEBUG here
 
     with torch.no_grad():
-        perception_module = PerceptionModule(obs_dims[0], obs_dims[1], config.visual_state_dim).to(device)
+        perception_module = PerceptionModule(vobs_dim, dof_dim, config.visual_state_dim).to(device)
         visual_goal_encoder = VisualGoalEncoder(config.visual_state_dim, config.goal_dim).to(device)
         plan_proposer = PlanProposerModule(config.combined_state_dim, config.goal_dim, config.latent_dim).to(device)
         control_module = ControlModule(act_dim, config.combined_state_dim, config.goal_dim, config.latent_dim).to(device)

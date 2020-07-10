@@ -4,6 +4,23 @@ from collections import OrderedDict
 from deg_base import DataEnvGroup
 
 class SurrealDataEnvGroup(DataEnvGroup):
+    ''' DataEnvGroup for Surreal Robotics Suite environment. 
+        
+        + The observation space can be modified through `config.env_args`
+        + Observation space:
+            - 'robot-state': proprioceptive feature - vector of:
+                > cos and sin of robot joint positions
+                > robot joint velocities 
+                > current configuration of the gripper.
+            - 'object-state': object-centric feature 
+            - 'image': RGB/RGB-D image 
+                > (256 x 256 by default)
+            - Refer: https://github.com/StanfordVL/robosuite/tree/master/robosuite/environments
+
+        + The action spaces by default are joint velocities and gripper actuations.
+            - To use the end-effector action-space use inverse-kinematics using IKWrapper.
+            - Refer: https://github.com/StanfordVL/robosuite/tree/master/robosuite/wrappers
+    '''
     def __init__(self):
         super(SurrealDataEnvGroup, self).__init__()
         assert self.env_name == 'SURREAL'
@@ -12,7 +29,7 @@ class SurrealDataEnvGroup(DataEnvGroup):
         obs = dummy_env.reset()
 
         # TODO : DEBUG here maybe
-        self.obs_space = {key : value.shape for key, value in obs.items()}
+        self.obs_space = {'image': (256, 256, 3), 'robot-state': (8)}
         self.action_space = dummy_env.dof
 
         del dumm_env
@@ -21,3 +38,7 @@ class SurrealDataEnvGroup(DataEnvGroup):
         env = suite.make(self.config.env_type, **self.config.env_args)
         env.reset()
         return env
+
+    def play_trajectory(self):
+        # TODO Refer https://github.com/StanfordVL/robosuite/blob/master/robosuite/scripts/playback_demonstrations_from_hdf5.py
+        raise NotImplementedError

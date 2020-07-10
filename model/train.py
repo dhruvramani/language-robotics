@@ -21,9 +21,11 @@ def train_visual_goals(deg, config):
 
     tensorboard_writer = SummaryWriter(logdir=config.tensorboard_path)
     env = deg.get_env()
-    obs_dims, act_dim = deg.obs_space['camera'], deg.action_space # TODO : DEBUG here
+    
+    vobs_dim, dof_dim = deg.obs_space['image'], deg.obs_space['robot-state'] 
+    act_dim = deg.action_space # TODO : DEBUG here
 
-    perception_module = PerceptionModule(obs_dims[0], obs_dims[1], config.visual_state_dim).to(device)
+    perception_module = PerceptionModule(vobs_dim, dof_dim, config.visual_state_dim).to(device)
     visual_goal_encoder = VisualGoalEncoder(config.visual_state_dim, config.goal_dim).to(device)
     plan_recognizer = PlanRecognizerModule(config.max_sequence_length, config.combined_state_dim, config.latent_dim).to(device)
     plan_proposer = PlanProposerModule(config.combined_state_dim, config.goal_dim, config.latent_dim).to(device)
