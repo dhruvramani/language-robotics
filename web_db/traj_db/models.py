@@ -32,6 +32,7 @@ class Trajectory(PolymorphicModel):
             - traj_count: The index number to this trajectory.
             = env_id: An identifier for the environment. Usually, the environment name.
             - task_id: Stores config.env_type - corresponding to the behavior in the trajectory.
+            - traj_steps: Number of time-steps in the trajectory.
             - data_path: Filename holding the trajectory data for this episode.
             - is_archived: Wether the trajectory is present in a tar.gz file or not
             - time_stamp: Unix timestamp recording when the trajectory was generated.
@@ -56,8 +57,9 @@ class Trajectory(PolymorphicModel):
 
     self.episode_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     self.traj_count = models.AutoField()
-    self.task_id = models.CharField(max_length=20, null=True)
     self.env_id = models.CharField(max_length=50)
+    self.task_id = models.CharField(max_length=50)
+    self.traj_steps = models.IntegerField()
     self.time_stamp = models.TimeField(auto_now_add=True, auto_now=False)
     self.data_path = models.CharField(max_length=1024)
     self.is_archived = models.BooleanField(default=False)

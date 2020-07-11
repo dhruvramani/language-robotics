@@ -206,7 +206,7 @@ class ControlModule(torch.nn.Module):
 
     def step(self, state, goal, zp, goal_encoder=None, perception_module=None):
         with torch.no_grad():
-            obs = self._prepare_obs(state, goal, zp, goal_encoder)
+            obs = self._prepare_obs(state, goal, zp, goal_encoder, perception_module)
             policy = self._distribution(obs)
             action = policy.sample()
             logp_a = self._log_prob_from_distribution(policy, action)

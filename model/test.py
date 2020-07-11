@@ -25,7 +25,7 @@ def test_experiment(deg, config):
             t, done = 0, False
 
             while (not done) and t <= config.max_test_timestep:
-                visual_obv, dof_obv = obvs
+                visual_obv, dof_obv = obvs['image'], obvs['robot-state']
                 state = perception_module(visual_obv, dof_obv)
                 goal = perception_module(goal_obv)
                 goal = visual_goal_encoder(goal) 

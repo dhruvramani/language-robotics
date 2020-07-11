@@ -47,6 +47,7 @@ def train_visual_goals(deg, config):
     optimizer = torch.optim.Adam(params, lr=config.learning_rate)
 
     if(config.resume):
+        # TODO : IMPORTANT - Check if file exist before loading
         perception_module.load_state_dict(torch.load(os.path.join(config.models_save_path, 'perception.pth')))
         visual_goal_encoder.load_state_dict(torch.load(os.path.join(config.models_save_path, 'visual_goal.pth')))
         plan_recognizer.load_state_dict(torch.load(os.path.join(config.models_save_path, 'plan_recognizer.pth')))
@@ -54,6 +55,7 @@ def train_visual_goals(deg, config):
         control_module.load_state_dict(torch.load(os.path.join(config.models_save_path, 'control_module.pth')))
         optimizer.load_state_dict(torch.load(os.path.join(config.models_save_path, 'optimizer.pth')))
 
+    print("Tensorboard path : {}".format(config.tensorboard_path))
     # TODO *IMPORTANT* : Change code to make it work with bigger batch-sizes.  
     data_loader = DataLoader(deg.dataset, batch_size=config.batch_size, shuffle=True, num_workers=1)
 
@@ -70,7 +72,7 @@ def train_visual_goals(deg, config):
             goal_state = visual_goal_encoder(goal_state)
 
             visual_obvs, dof_obs = trajectory[0, :, 0]
-            trajectory[0, :, 0] = perception_module(visual_obvs, dof_obs)
+            trajectory[0, :, 0] = perception_module(visual_obvs, dof_obs) # DEBUG : Might raise in-place errors
             inital_state = trajectory[0, 0, 0]
 
             prior_z, prior_mean, prior_logv = plan_proposer(inital_state, goal_state)

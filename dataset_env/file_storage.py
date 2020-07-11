@@ -28,7 +28,7 @@ def store_trajectoy(trajectory, episode_type=config.episode_type):
 
     # NOTE : Current data_path is a placeholder. Edited below with UUID.
     metadata = config.traj_db(task_id=config.env_type, env_id=config.env, 
-        data_path=config.data_path, episode_type=episode_type)
+        data_path=config.data_path, episode_type=episode_type, traj_steps=trajectory.shape[0])
 
     metadata.save()
     metadata.data_path = os.path.join(config.data_path, "{}.pt".format(metadata.episode_id))
@@ -40,17 +40,27 @@ def store_trajectoy(trajectory, episode_type=config.episode_type):
         with open(metadata.data_path, 'wb') as file:
             np.save(file, trajectory)
 
-def get_trajectory(random=True, index=None, episode_id=None):
+def get_trajectory(random=True, episode_type=None, index=None, episode_id=None):
+    # TODO : If trajectory is in archive-file, get it from there
     if random == False:
         assert episode_id is not None or index is not None
         if index is not None:
-            metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index)
+            if episode_type is None: # TODO : Clean code
+                metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index)
+            else:
+                metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index, episode_type=episode_type)
         elif episode_id is not None:
-            metadata = config.traj_db.objects.get(task_id=config.env_type, episode_id=episode_id)
+            if episode_type is None:
+                metadata = config.traj_db.objects.get(task_id=config.env_type, episode_id=episode_id)
+            else:
+                metadata = config.traj_db.objects.get(task_id=config.env_type, episode_id=episode_id, episode_type=episode_type))
     else :
         count = config.traj_db.objects.count()
         random_index = randint(1, count - 1)
-        metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index)
+        if episode_type is None:
+            metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index)
+        else:
+            metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index, episode_type=episode_type)))
     
     trajectory = None
     if config.store_as == 'TorchTensor':
@@ -86,3 +96,7 @@ def archive_traj_task(task=config.env_type, file_name=None):
             archive.save()
 
     tar.close()
+
+# TODO
+def delete_trajectory(episode_id):
+    raise NotImplementedError

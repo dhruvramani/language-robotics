@@ -8,14 +8,15 @@ from demons_config import get_demons_args
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../dataset_env'))
 
 from file_storage import store_trajectoy
+from surreal_deg import SurrealDataEnvGroup
 
 from robosuite import robosuite
 from robosuite.robosuite.wrappers import IKWrapper
 import robosuite.robosuite.utils.transform_utils as T
 
 def collect_human_demonstrations(config):
-    assert cofig.env == "SURREAL"
-    env = robosuite.make(config.env_type, **config.env_args)
+    deg = SurrealDataEnvGroup()
+    env = deg.get_env()
     # Need to use inverse-kinematics controller to set position using device 
     env = IKWrapper(env)
     
@@ -81,11 +82,13 @@ def collect_human_demonstrations(config):
                 trajectory = np.concatenate((trajectory, traj), 0)
 
             if int(step % config.flush_freq) == 0:
+                print("Storing Trajectory")
                 store_trajectoy(trajectory, 'play')
                 trajectory = []
 
             if config.break_traj_success and task_completion_hold_count == 0:
                 if type(trajectory) is not list:
+                    print("Storing Trajectory")
                     store_trajectoy(trajectory, 'play')
                 break
 
@@ -103,4 +106,5 @@ def collect_human_demonstrations(config):
 
 if __name__ == "__main__":
     demon_config = get_demons_args()
-    collect_human_demonstrations(demon_config)
+    if demon_config.collect_by == 'play':
+        collect_human_demonstrations(demon_config)
