@@ -15,7 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from hindsight_instruction import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', views.hindsight_instruction, name="hindsight_instruction")
 ]

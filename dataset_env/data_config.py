@@ -37,12 +37,16 @@ def get_dataset_args():
     parser.add_argument('--archives_path', type=str, default=os.path.join(BASE_DIR, 'data_files/archives'))
     parser.add_argument('--store_as', type=str, default='NumpyArray', choices=['TorchTensor', 'NumpyArray'])
     parser.add_argument('--episode_type', type=ep_type, default='play', choices=['play', 'imitation', 'expert', 'policy', 'exploration'])
+    parser.add_argument('--media_dir', type=str, default=os.path.join(BASE_DIR, 'web_db/static/media/'))
+    parser.add_argument('--vid_path', type=str, default='vid.mp4')
+    parser.add_argument('--fps', type=int, default=30)
     
     config = parser.parse_args()
     config.traj_db = env2TrajDB(config.env)
     config.instruct_db = env2InstructDB(config.env)
     config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
     config.archives_path = os.path.join(config.archives_path, '{}_{}/'.format(config.env, config.env_type)) 
+    config.vid_path = os.path.join(config.media_dir, config.vid_path)
 
     check_n_create_dir(config.data_path)
     check_n_create_dir(config.archives_path)

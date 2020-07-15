@@ -1,0 +1,56 @@
+{% block title %} Hindsight Labelling {% endblock title %}
+{% block content %}
+
+    {% if save_success %}
+    <div class="notification is-primary">
+        <button class="delete"></button>
+        Instruction saved <strong>succesfully</strong>.
+    </div>
+    {% endif %}
+
+    <div class='columns'>
+        <div class="column">
+            <figure class="image is-16by9">
+                <video class="has-ratio" width="512" height="288" controls>
+                    <source src="{% static 'media/vid.mp4' %}" type="video/mp4">
+                </video>
+            </figure>
+        </div>
+    </div>
+
+    <div class="columns">
+        <div class="column is-4">
+            <img src="{% static 'media/inital.png' %}" class="image is-16by9">
+            <p>Initial State</p>
+        </div>
+        <div class="column is-4"></div>
+        <div class="column is-4">
+            <img src="{% static 'media/goal.png' %}" class="image is-16by9">
+            <p>Final State</p>
+        </div>
+    </div>
+
+    <form method="post"> {% csrf_token %}
+        
+        <div class="field has-addons">
+            <label class="label">Task Instruction</label>
+            <div class="control">
+                <input class="input" type="text" name="instruction">
+            </div>
+            <div class="control">
+                <input class="button is-primary" type="submit">Submit</input>
+            </div>
+            <p class="help">What instruction does the robot need to follow to get to the goal?</p>
+        </div>
+
+        <div class="field has-addons">
+            <p class="control">
+                <a class="button is-static">Trajectory ID</a>
+            </p>
+            <p class="control">
+                <input class="input" type="text" name="episode_id" value="{{ episode_id }}" maxlength="36" disabled>
+            </p>
+        </div>
+    </form>
+
+{% endblock content %}

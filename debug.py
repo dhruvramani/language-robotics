@@ -31,6 +31,12 @@
 
 # o = Outer()
 
-layers_size = [2048] * 4
-for i, (in_size) in enumerate(layers_size[1:]):
-    print(in_size)
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+print("hello")
+
+
+def foo():
+    print(sys.path)

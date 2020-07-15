@@ -1,8 +1,10 @@
 import os
 import sys
+import uuid
 import torch
 import tarfile
 import numpy as np
+import torchvision
 from random import randint
 from data_config import get_dataset_args, ep_type
 
@@ -40,27 +42,19 @@ def store_trajectoy(trajectory, episode_type=config.episode_type):
         with open(metadata.data_path, 'wb') as file:
             np.save(file, trajectory)
 
-def get_trajectory(random=True, episode_type=None, index=None, episode_id=None):
+def get_trajectory(episode_type=None, index=None, episode_id=None):
     # TODO : If trajectory is in archive-file, get it from there
-    if random == False:
-        assert episode_id is not None or index is not None
-        if index is not None:
-            if episode_type is None: # TODO : Clean code
-                metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index)
-            else:
-                metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index, episode_type=episode_type)
-        elif episode_id is not None:
-            if episode_type is None:
-                metadata = config.traj_db.objects.get(task_id=config.env_type, episode_id=episode_id)
-            else:
-                metadata = config.traj_db.objects.get(task_id=config.env_type, episode_id=episode_id, episode_type=episode_type)
-    else :
-        count = config.traj_db.objects.count()
-        random_index = randint(1, count - 1)
-        if episode_type is None:
-            metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index)
+    assert episode_id is not None or index is not None
+    if index is not None:
+        if episode_type is None: # TODO : Clean code
+            metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index)
         else:
-            metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index, episode_type=episode_type)))
+            metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index, episode_type=episode_type)
+    elif episode_id is not None:
+        if episode_type is None:
+            metadata = config.traj_db.objects.get(task_id=config.env_type, episode_id=uuid.UUID(episode_id))
+        else:
+            metadata = config.traj_db.objects.get(task_id=config.env_type, episode_id=uuid.UUID(episode_id), episode_type=episode_type
     
     trajectory = None
     if config.store_as == 'TorchTensor':
@@ -69,6 +63,38 @@ def get_trajectory(random=True, episode_type=None, index=None, episode_id=None):
         trajectory = np.load(metadata.data_path)
 
     return trajectory
+
+def get_random_trajectory(episode_type=None):
+    count = config.traj_db.objects.count()
+    random_index = randint(1, count - 1)
+    if episode_type is None:
+        metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index)
+    else:
+        metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index, episode_type=episode_type)))
+    
+    trajectory = None
+    if config.store_as == 'TorchTensor':
+        trajectory = torch.load(metadata.data_path)
+    elif onfig.store_as == 'NumpyArray':
+        trajectory = np.load(metadata.data_path)
+
+    return trajectory, str(metadata.episode_id)
+
+
+def create_video(trajectory):
+    trajectory = trajectory[:, 0]
+    assert trajectory.shape[-1] == 3
+    
+    if type(trajectory) is not torch.Tensor:
+        trajectory = torch.FloatTensor(trajectory)
+
+    inital_obv, goal_obv = trajectory[0], trajectory[-1]
+    torchvision.utils.save_image(inital_obv, os.path.join(config.media_dir, 'inital.png'))
+    torchvision.utils.save_image(goal_obv, os.path.join(config.media_dir, 'goal.png'))
+
+    torchvision.io.write_video(config.vid_path, trajectory, config.fps)
+    return config.vid_path
+
 
 def archive_traj_task(task=config.env_type, episode_type=None, file_name=None):
     ''' 
@@ -102,6 +128,5 @@ def archive_traj_task(task=config.env_type, episode_type=None, file_name=None):
 
     tar.close()
 
-# TODO
 def delete_trajectory(episode_id):
-    raise NotImplementedError
+    config.traj_db.objects.filter(episode_id=episode_id).delete()

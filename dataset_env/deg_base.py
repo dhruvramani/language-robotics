@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset
 
 from data_config import get_dataset_args
-from file_storage import get_trajectory
+from file_storage import get_trajectory, get_random_trajectory
 
 class DataEnvGroup(object):
     ''' + NOTE : Create subclass for every environment, eg.
@@ -27,7 +27,7 @@ class DataEnvGroup(object):
         raise NotImplementedError
 
     def get_random_goal(self):
-        goal_obs = get_trajectory(random=True)[-1, 0]
+        goal_obs = get_random_trajectory()[0][-1, 0]
         goal = goal_obs[0]
         return goal
 
