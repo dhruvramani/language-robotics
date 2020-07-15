@@ -15,7 +15,6 @@ from models import PerceptionModule
 from model_config import get_model_args
 
 from file_storage import store_trajectoy
-from surreal_deg import SurrealDataEnvGroup
 
 device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
 
@@ -86,9 +85,9 @@ class PlayGenerationModule(torch.nn.Module):
 def train_imitation(demons_config):
     model_config = get_model_args()
 
-    deg = SurrealDataEnvGroup(get_episode_type='EPISODE_ROBOT_PLAY')
+    deg = demons_config.deg(get_episode_type='EPISODE_ROBOT_PLAY')
 
-    vobs_dim, dof_dim = deg.obs_space['image'], deg.obs_space['robot-state'] 
+    vobs_dim, dof_dim = deg.obs_space[deg.vis_obv_key], deg.obs_space[deg.dof_obv_key] 
     act_dim = deg.action_space # TODO : DEBUG here
 
     tensorboard_writer = SummaryWriter(logdir=demons_config.tensorboard_path)
@@ -133,7 +132,7 @@ def train_imitation(demons_config):
             loss.backward()
             optimizer.step()
 
-            if int(i % config.save_interval) == 0:
+            if int(i % model_config.save_interval) == 0:
                 if not demons_config.use_model_perception_module:
                     torch.save(perception_module.state_dict(), os.path.join(demons_config.models_save_path, 'perception.pth'))
                 torch.save(play_gen_module.state_dict(), os.path.join(demons_config.models_save_path, 'play_gen_module.pth'))
@@ -144,10 +143,10 @@ def imitate_play():
     model_config = get_model_args()
     demons_config = get_demons_args()
 
-    deg = SurrealDataEnvGroup()
+    deg = demons_config.deg()
     env = deg.get_env()
     
-    vobs_dim, dof_dim = deg.obs_space['image'], deg.obs_space['robot-state'] 
+    vobs_dim, dof_dim = deg.obs_space[deg.vis_obv_key], deg.obs_space[deg.dof_obv_key] 
     act_dim = deg.action_space # TODO : DEBUG here
 
     with torch.no_grad():
@@ -165,12 +164,12 @@ def imitate_play():
             trajectory = []
 
             for step in range(demon_config.flush_freq):
-                visual_obv, dof_obv = obvs['image'], obvs['robot-state']
+                visual_obv, dof_obv = obvs[deg.vis_obv_key], obvs[deg.dof_obv_key]
                 state = perception_module(visual_obv, dof_obv)
 
                 action, _ = play_gen_module.step(state)
                 
-                obv_2_store = np.array([obs['image'], obs['robot-state'].flatten()])
+                obv_2_store = np.array([obs[deg.vis_obv_key], obs[deg.dof_obv_key].flatten()])
                 traj = np.array([obv_2_store, action])
                 traj = np.expand_dims(traj, 0)
                 if type(trajectory) == list and len(trajectory) == 0:
@@ -180,7 +179,7 @@ def imitate_play():
 
                 obs, _, done, _ = env.step(action)
 
-            print("Storing Trajectory")
+            print('Storing Trajectory')
             store_trajectoy(trajectory, 'imitation')
 
         env.close()

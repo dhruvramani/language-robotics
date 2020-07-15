@@ -8,6 +8,7 @@ from global_config import *
 
 def get_demons_args():
     parser = get_global_parser()
+    parser.add_argument('--deg', type=env2deg, default='SURREAL')
     parser.add_argument("--collect_by", type=str, default='play', choices=['play', 'imitation', 'expert', 'policy', 'exploration'])
     parser.add_argument("--device", type=str, default="keyboard", choices=["keyboard", "spacemouse"])
     parser.add_argument("--collect_freq", type=int, default=1)
@@ -24,8 +25,13 @@ def get_demons_args():
     parser.add_argument('--n_gen_traj', type=int, default=200, help="Number of trajectories to generate by imitation")
 
     config = parser.parse_args()
+    config.deg = env2deg(config.env)
     config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
     config.models_save_path = os.path.join(BASE_DIR, 'runs/imitation-models/{}_{}/'.format(config.env, config.env_type))
     config.tensorboard_path = os.path.join(config.tensorboard_path, '{}_{}_{}/'.format(config.env, config.env_type, config.exp_name)) 
+
+    check_n_create_dir(config.data_path)
+    check_n_create_dir(config.models_save_path)
+    check_n_create_dir(config.tensorboard_path)
 
     return config

@@ -53,7 +53,7 @@ def get_trajectory(random=True, episode_type=None, index=None, episode_id=None):
             if episode_type is None:
                 metadata = config.traj_db.objects.get(task_id=config.env_type, episode_id=episode_id)
             else:
-                metadata = config.traj_db.objects.get(task_id=config.env_type, episode_id=episode_id, episode_type=episode_type))
+                metadata = config.traj_db.objects.get(task_id=config.env_type, episode_id=episode_id, episode_type=episode_type)
     else :
         count = config.traj_db.objects.count()
         random_index = randint(1, count - 1)
@@ -70,7 +70,7 @@ def get_trajectory(random=True, episode_type=None, index=None, episode_id=None):
 
     return trajectory
 
-def archive_traj_task(task=config.env_type, file_name=None):
+def archive_traj_task(task=config.env_type, episode_type=None, file_name=None):
     ''' 
         Archives trajectories by task (env_type)
         + Arguments:
@@ -78,10 +78,15 @@ def archive_traj_task(task=config.env_type, file_name=None):
             - file_name: the name of the archive file. [NOTE: NOT THE PATH]
                 >  NOTE : default file_name: `env_task.tar.gz`
     '''
-    objects = config.traj_db.objects.get(task_id=task)
+    if episode_type is None:
+        objects = config.traj_db.objects.get(task_id=task)
+        f_name = "{}_{}.tar.gz".format(config.env, config.env_type)
+    else:
+        objects = config.traj_db.objects.get(task_id=task, episode_type=episode_type)
+        f_name = "{}_{}_{}.tar.gz".format(config.env, config.env_type, episode_type)
     
     if file_name is None:
-        file_name = "{}_{}.tar.gz".format(config.env, config.env_type)
+        file_name = f_name
     file_name = os.path.join(config.archives_path, file_name)
 
     tar = tarfile.open(file_name, "w:gz")

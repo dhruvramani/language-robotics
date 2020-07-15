@@ -9,17 +9,18 @@ from global_config import *
 from models import SurrealRoboticsSuiteTrajectory, USCFurnitureTrajectory
 from models import SurrealRoboticsSuiteInstruction, USCFurnitureInstruction
 
+taj_db_dict = {'SURREAL' : SurrealRoboticsSuiteTrajectory, 'FURNITURE' : USCFurnitureTrajectory}
+instruct_db_dict = {'SURREAL' : SurrealRoboticsSuiteInstruction, 'FURNITURE' : USCFurnitureInstruction}
+
 def env2TrajDB(string):
     if string is None:
         return None
-    db_dict = {'SURREAL' : SurrealRoboticsSuiteTrajectory, 'FURNITURE' : USCFurnitureTrajectory}
-    return db_dict[string.upper()]
+    return taj_db_dict[string.upper()]
 
 def env2InstructDB(string):
     if string is None:
         return None
-    db_dict = {'SURREAL' : SurrealRoboticsSuiteInstruction, 'FURNITURE' : USCFurnitureInstruction}
-    return db_dict[string.upper()]
+    return instruct_db_dict[string.upper()]
 
 def ep_type(string):
     ep_dict = {'play': 'EPISODE_ROBOT_PLAY', 'imitation': 'EPISODE_ROBOT_IMITATED',
@@ -30,7 +31,7 @@ def ep_type(string):
 def get_dataset_args():
     parser = get_global_parser()
 
-    # NOTE : SURREAL is a placeholder - replaced by env_name below.
+    # NOTE : Replaced by env_name below. v
     parser.add_argument('--traj_db', type=env2TrajDB, default='SURREAL')
     parser.add_argument('--instruct_db', type=env2InstructDB, default='SURREAL')
     parser.add_argument('--archives_path', type=str, default=os.path.join(BASE_DIR, 'data_files/archives'))
@@ -42,5 +43,8 @@ def get_dataset_args():
     config.instruct_db = env2InstructDB(config.env)
     config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
     config.archives_path = os.path.join(config.archives_path, '{}_{}/'.format(config.env, config.env_type)) 
+
+    check_n_create_dir(config.data_path)
+    check_n_create_dir(config.archives_path)
 
     return config

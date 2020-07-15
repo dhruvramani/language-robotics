@@ -1,8 +1,11 @@
 # Language-Based Robotics
 
 + TODO's 
+    - ensure that env & env_type arguments are enough for everything, don't have to change anything else
+    - check for syntax errors
     - Code datatset_env & collect_demons for Furniture env
     - edit fs.py to include code to unarchive when get traj is called
+    - edit store_trajectoy to crop trajectory using w_low, w_high
 + IDEAs 
     - Given a collection of play-data and their currosponding instructions, generate more instructions using some NLP model so as to train our robot in a better way?
     - Like using BC for generating more play-data : but for instructions

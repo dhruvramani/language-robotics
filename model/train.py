@@ -11,7 +11,7 @@ from models import *
 # NOTE : If in future, you operate on bigger hardwares - move to PyTorch Lightning
 device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
 
-def train_visual_goals(deg, config):
+def train_visual_goals(config):
     '''
         > Train on batches of random play sequences : 
             For each training batch and each batch sequence element: 
@@ -19,10 +19,11 @@ def train_visual_goals(deg, config):
             Extract the final observation in T as the synthetic goal state O_g and encode it : s_g.  
     '''
 
+    deg = config.deg()
     tensorboard_writer = SummaryWriter(logdir=config.tensorboard_path)
     env = deg.get_env()
     
-    vobs_dim, dof_dim = deg.obs_space['image'], deg.obs_space['robot-state'] 
+    vobs_dim, dof_dim = deg.obs_space[deg.vis_obv_key], deg.obs_space[deg.dof_obv_key] 
     act_dim = deg.action_space # TODO : DEBUG here
 
     perception_module = PerceptionModule(vobs_dim, dof_dim, config.visual_state_dim).to(device)
@@ -69,7 +70,7 @@ def train_visual_goals(deg, config):
             last_obvs = trajectory[0, -1, 0]
             assert last_obvs.size()[0] == config.num_obv_types
             goal_state = perception_module(last_obvs[0])
-            goal_state = visual_goal_encoder(goal_state)
+            goal_state, _, _ = visual_goal_encoder(goal_state)
 
             visual_obvs, dof_obs = trajectory[0, :, 0]
             trajectory[0, :, 0] = perception_module(visual_obvs, dof_obs) # DEBUG : Might raise in-place errors

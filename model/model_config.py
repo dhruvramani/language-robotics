@@ -10,6 +10,8 @@ def get_model_args():
     # TODO : Change w/ Hyperparams search later.
     parser = get_global_parser()
 
+    # NOTE: Changed below. v
+    parser.add_argument('--deg', type=env2deg, default='SURREAL')
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--is_train', type=str2bool, default=True)
     parser.add_argument('--resume', type=str2bool, default=False)
@@ -29,8 +31,13 @@ def get_model_args():
     parser.add_argument('--latent_dim', type=int, default=256)
     
     config = parser.parse_args()
+    config.deg = env2deg(config.env)
     config.models_save_path = os.path.join(config.models_save_path, '{}_{}_{}/'.format(config.env, config.env_type, config.exp_name)) 
     config.tensorboard_path = os.path.join(config.tensorboard_path, '{}_{}_{}/'.format(config.env, config.env_type, config.exp_name)) 
     config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
+
+    check_n_create_dir(config.models_save_path)
+    check_n_create_dir(config.tensorboard_path)
+    check_n_create_dir(config.data_path)
 
     return config

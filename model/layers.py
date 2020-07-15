@@ -44,43 +44,46 @@ class ConditionalVAE(torch.nn.Module):
     '''
         CoditionalVAE : z ~ p(z | x, c)
         + input_size  : combined dimension of x, c.
-        + layers_size : list of dims for diff layers of the encoder.
+        + layer_sizes : list of dims for diff layers of the encoder.
     '''
-    def __init__(self, input_size, latent_size=256, layers_size=[2048] * 4, decoder=False):
+    def __init__(self, input_size, latent_size=256, layer_sizes=[2048] * 4, decoder=False):
         super(ConditionalVAE, self).__init__()
         self.input_size = self.input_size
         self.latent_size = self.latent_size
-        self.layers_size = self.layers_size
+        self.layer_sizes = self.layer_sizes
 
-        assert type(self.layers_size) == list
+        assert type(self.layer_sizes) == list
 
         self.decoder = decoder
 
         self.encoder_network = torch.nn.Sequential()
-        self.encoder_network.add_module(torch.nn.Linear(self.input_size, self.layers_size[0]))
+        self.encoder_network.add_module(torch.nn.Linear(self.input_size, self.layer_sizes[0]))
         self.encoder_network.add_module(torch.nn.ReLU())
 
-        for i, (in_size, out_size) in enumerate(self.layer_sizes[1:]):
+        for i in range(self.layer_sizes[:-1]):
+            in_size, out_size = i, i + 1
             self.encoder_network.add_module(torch.nn.Linear(in_size, out_size))
             self.encoder_network.add_module(torch.nn.ReLU())
 
         self.hidden2mean = torch.nn.Linear(self.layer_sizes[-1], self.latent_size)
         self.hidden2logv = torch.nn.Linear(self.layer_sizes[-1], self.latent_size) # TODO : Maybe keep logstd fixed
-        self.softplus = torch.nn.Softplus() # TODO : Check w/ Softplus
+        self.softplus = torch.nn.Softplus() 
 
         if self.decoder:
-            self.dlayers_size = self.layers_size.reverse()
+            self.dlayers_size = self.layer_sizes.reverse()
             self.decoder_network = torch.nn.Sequential()
             self.decoder_network.add_module(torch.nn.Linear(self.latent_size, self.dlayers_size[0]))
             self.decoder_network.add_module(torch.nn.ReLU())
 
-            for i, (in_size, out_size) in enumerate(self.dlayer_sizes[1:]):
+            for i in range(self.dlayers_size[:-1]):
+                in_size, out_size = i, i + 1
                 self.decoder_network.add_module(torch.nn.Linear(in_size, out_size))
                 self.decoder_network.add_module(torch.nn.ReLU())
 
-            self.decoder_network.add_module(torch.nn.Linear(self.dlayers_size[0], self.input_size))            
+            self.decoder_network.add_module(torch.nn.Linear(self.dlayers_size[-1], self.input_size))            
 
     def forward(self, x, c):
+        batch_size = x.size(0)
         assert x.size()[-1] + c.size()[-1] == self.input_size
         
         x = torch.cat((x, c), dim=-1)

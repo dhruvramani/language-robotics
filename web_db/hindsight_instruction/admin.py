@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import SurrealRoboticsSuiteInstruction, USCFurnitureInstruction
 
-# Register your models here.
+admin.site.register(SurrealRoboticsSuiteInstruction)
+admin.site.register(USCFurnitureInstruction)

@@ -15,7 +15,8 @@ from robosuite.robosuite.wrappers import IKWrapper
 import robosuite.robosuite.utils.transform_utils as T
 
 def collect_human_demonstrations(config):
-    deg = SurrealDataEnvGroup()
+    assert config.env == 'SURREAL'
+    deg = config.deg()
     env = deg.get_env()
     # Need to use inverse-kinematics controller to set position using device 
     env = IKWrapper(env)
@@ -45,7 +46,7 @@ def collect_human_demonstrations(config):
         trajectory = []
         
         while not reset:
-            obv_2_store = np.array([obs['image'], obs['robot-state'].flatten()])
+            obv_2_store = np.array([obs[deg.vis_obv_key], obs[deg.dof_obv_key].flatten()])
             
             device_state = device.get_controller_device_state()
             dpos, rotation, grasp, reset = (
@@ -108,3 +109,10 @@ if __name__ == "__main__":
     demon_config = get_demons_args()
     if demon_config.collect_by == 'play':
         collect_human_demonstrations(demon_config)
+    
+    elif demons_config.collect_by == 'imitation':
+        import imitate_play
+        
+        if demons_config.train_imitation:
+            imitate_play.train_imitation(demons_config)
+        imitate_play.imitate_play()

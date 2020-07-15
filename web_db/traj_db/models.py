@@ -7,16 +7,8 @@ class SurrealRoboticsSuiteTrajectory(Trajectory):
     ''' Trajectory table for Surreal Robotics Suite environment. '''
     pass
 
-class SurrealRoboticsSuiteInstruction(Instruction):
-    ''' Instruction table for Surreal Robotics Suite environment. '''
-    pass
-
 class USCFurnitureTrajectory(Trajectory):
     ''' Trajectory table for USC's Furniture environment. '''
-    pass
-
-class USCFurnitureInstruction(Instruction):
-    '''Instruction table for USC's Furniture environment. '''
     pass
 
 class Trajectory(PolymorphicModel):
@@ -81,30 +73,6 @@ class TrajectoryTag(models.Model):
     
     def __str__(self):
         return self.name
-
-class Instruction(PolymorphicModel):
-    ''' Table containing instructios for each trajectory collected using Hindsight Instruction.
-        NOTE : ABSTRACT CLASS - Create a new subclass/table for each Env.
-
-        + Attributes:
-            - instruction_id: A UUID providing a uique identifier for the instruction.
-            - instruction_count: The index number to this instruction.
-            - user: The user who annotated the trajectory. 
-                > NOTE : Set it to `request.user`.
-            - instruction: collected instruction for a particular trajectory.
-            - trajectory: (Trajectory) trajectory associated with the instruction.
-                > Chosen this way as a single trajectoy can have multiple instructions.
-                > Also while training, we only need trajectoies containing instructions. Easier this way.
-    ''' 
-    self.instruction_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    self.instruction_count = models.AutoField()
-    self.env_id = models.CharField(max_length=50)
-    self.user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    self.instruction = models.CharField(max_length=int(1e4))
-    self.trajectory = models.ForeignKey(Trajectory, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return "{} : {}".format(self.env_id, self.instruction)
 
 class ArchiveFile(models.Model):
     ''' Table describing where episodes are stored in archives.

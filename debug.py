@@ -17,16 +17,20 @@
 # traj = np.concatenate((s_a1, s_a2), 0)
 # print(traj.shape)
 
-class Outer():
-    def __init__(self):
-        self.a = 10
-        self.inner = self.Inner(self.a)
-        print(self.inner.b)
+# class Outer():
+#     def __init__(self):
+#         self.a = 10
+#         self.inner = self.Inner(self.a)
+#         print(self.inner.b)
 
-    class Inner():
-        def __init__(self, a):
-            self.ab = a
-            print(self.ab)
-            self.b = 100
+#     class Inner():
+#         def __init__(self, a):
+#             self.ab = a
+#             print(self.ab)
+#             self.b = 100
 
-o = Outer()
+# o = Outer()
+
+layers_size = [2048] * 4
+for i, (in_size) in enumerate(layers_size[1:]):
+    print(in_size)

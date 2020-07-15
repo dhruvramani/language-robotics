@@ -29,12 +29,12 @@ class PerceptionModule(torch.nn.Module):
         self.state_dim = state_dim
 
         assert visual_obv_dim[0] == visual_obv_dim[1]
-
+        # TODO : IMPORTANT - Remove padding to ensure proper convs
         self.conv1 = torch.nn.Conv2d(3, 32, kernel_size=(8, 8), stride=4, padding=2)
         self.conv2 = torch.nn.Conv2d(32, 64, kernel_size=(4, 4), stride=2)
         self.conv3 = torch.nn.Conv2d(64, 64, kernel_size=(3, 3), stride=1)
         self.ss = SpatialSoftmax(22, 22, 64)
-        self.lin1 = torch.nn.Linear(22 * 22* 64, 512)
+        self.lin1 = torch.nn.Linear(22 * 22* 64, 512) # TODO Might change IP shape
         self.lin2 = torch.nn.Linear(512, state_dim)
         self.relu = torch.nn.ReLU()
 
@@ -66,9 +66,9 @@ class VisualGoalEncoder(torch.nn.Module):
         self.goal_dim = goal_dim
         self.lin1 = torch.nn.Linear(state_dim, 2048)
         self.lin2 = torch.nn.Linear(2048, 2048)
-        self.lin3 = torch.nn.Linear(2048, goal_dim)
+        self.hidden2mean = torch.nn.Linear(2048, self.goal_dim)
+        self.hidden2logv = torch.nn.Linear(2048, self.goal_dim) 
         self.relu = torch.nn.ReLU()
-        # TODO *IMPORTANT* : Might have to model it as a gaussian distribution. 
 
     def forward(self, visual_obv, perception_module=None):
         if visual_obv.size() == 2 # To filter dof-obvs
@@ -78,9 +78,15 @@ class VisualGoalEncoder(torch.nn.Module):
             visual_obv = perception_module(visual_obv, None)
         output = self.relu(self.lin1(visual_obv))
         output = self.relu(self.lin2(output))
-        output = self.lin3(output)
 
-        return output
+        mean = self.hidden2mean(output)
+        logv = self.hidden2logv(output)
+        std = torch.exp(0.5 * logv)
+        
+        z = torch.randn([self.goal_dim]) # TODO : Maybe change shaoe to 1,  
+        z = z * std + mean
+
+        return z, mean, std
 
 class PlanRecognizerModule(torch.nn.Module):
     ''' 
