@@ -3,11 +3,11 @@ import sys
 import argparse
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/traj_db/'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/'))
 
 from global_config import *
-from models import SurrealRoboticsSuiteTrajectory, USCFurnitureTrajectory
-from models import SurrealRoboticsSuiteInstruction, USCFurnitureInstruction
+from traj_db.models import SurrealRoboticsSuiteTrajectory, USCFurnitureTrajectory
+from hindsight_instruction.models import SurrealRoboticsSuiteInstruction, USCFurnitureInstruction
 
 taj_db_dict = {'SURREAL' : SurrealRoboticsSuiteTrajectory, 'FURNITURE' : USCFurnitureTrajectory}
 instruct_db_dict = {'SURREAL' : SurrealRoboticsSuiteInstruction, 'FURNITURE' : USCFurnitureInstruction}
@@ -50,5 +50,6 @@ def get_dataset_args():
 
     check_n_create_dir(config.data_path)
     check_n_create_dir(config.archives_path)
+    check_n_create_dir(config.media_dir)
 
     return config

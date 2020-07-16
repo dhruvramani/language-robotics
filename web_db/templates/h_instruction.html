@@ -2,9 +2,13 @@
 {% block content %}
 
     {% if save_success %}
-    <div class="notification is-primary">
-        <button class="delete"></button>
-        Instruction saved <strong>succesfully</strong>.
+    <div class="columns">
+        <div class="column">
+            <div class="notification is-primary">
+                <button class="delete"></button>
+                Instruction <strong>saved</strong> succesfully.
+            </div>
+        </div>
     </div>
     {% endif %}
 
@@ -31,25 +35,29 @@
     </div>
 
     <form method="post"> {% csrf_token %}
-        
-        <div class="field has-addons">
-            <label class="label">Task Instruction</label>
-            <div class="control">
-                <input class="input" type="text" name="instruction">
+        <div class="columns">
+            <div class="column is-8">
+                <div class="field has-addons">
+                    <label class="label">Task Instruction</label>
+                    <div class="control">
+                        <input class="input is-primary" type="text" name="instruction">
+                    </div>
+                    <div class="control">
+                        <input class="button is-primary" type="submit">Submit</input>
+                    </div>
+                    <p class="help">What instruction does the robot need to follow to get to the goal?</p>
+                </div>
             </div>
-            <div class="control">
-                <input class="button is-primary" type="submit">Submit</input>
+            <div class="column is-4">
+                <div class="field has-addons">
+                    <p class="control">
+                        <a class="button is-static">Trajectory ID</a>
+                    </p>
+                    <p class="control">
+                        <input class="input" type="text" name="episode_id" value="{{ episode_id }}" maxlength="36" disabled>
+                    </p>
+                </div>
             </div>
-            <p class="help">What instruction does the robot need to follow to get to the goal?</p>
-        </div>
-
-        <div class="field has-addons">
-            <p class="control">
-                <a class="button is-static">Trajectory ID</a>
-            </p>
-            <p class="control">
-                <input class="input" type="text" name="episode_id" value="{{ episode_id }}" maxlength="36" disabled>
-            </p>
         </div>
     </form>
 
