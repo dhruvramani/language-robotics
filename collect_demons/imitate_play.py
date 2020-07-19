@@ -110,7 +110,7 @@ def train_imitation(demons_config):
 
     print("Tensorboard path : {}".format(demons_config.tensorboard_path))
     # TODO *IMPORTANT* : Change code to make it work with bigger batch-sizes.  
-    data_loader = DataLoader(deg.dataset, batch_size=model_config.batch_size, shuffle=True, num_workers=1)
+    data_loader = DataLoader(deg.traj_dataset, batch_size=model_config.batch_size, shuffle=True, num_workers=1)
 
     for epoch in tqdm(range(model_config.max_epochs), desc="Check Tensorboard"):
         for i, trajectory in enumerate(data_loader):

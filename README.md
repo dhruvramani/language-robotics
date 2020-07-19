@@ -1,5 +1,7 @@
 # Language-Based Robotics
 
+Make it very accurate on while working with pixels. Just have to change PerceptionModule.
+
 + TODO's 
     - ensure that env & env_type arguments are enough for everything, don't have to change anything else
     - check for syntax errors

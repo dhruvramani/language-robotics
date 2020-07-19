@@ -40,6 +40,7 @@ def get_dataset_args():
     parser.add_argument('--media_dir', type=str, default=os.path.join(BASE_DIR, 'web_db/static/media/'))
     parser.add_argument('--vid_path', type=str, default='vid.mp4')
     parser.add_argument('--fps', type=int, default=30)
+    parser.add_argument('--vocab_path', type=str, default=os.path.join(BASE_DIR, 'data_files/vocab.pkl'))
     
     config = parser.parse_args()
     config.traj_db = env2TrajDB(config.env)

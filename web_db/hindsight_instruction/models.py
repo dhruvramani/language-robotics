@@ -23,6 +23,8 @@ class Instruction(PolymorphicModel):
         + Attributes:
             - instruction_id: A UUID providing a uique identifier for the instruction.
             - instruction_count: The index number to this instruction.
+            - env_id: An identifier for the environment. Same as trajectory.
+            - task_id: Stores config.env_type. Same  as trajectory.
             - user: The user who annotated the trajectory. 
                 > NOTE : Set it to `request.user`.
             - instruction: collected instruction for a particular trajectory.
@@ -33,6 +35,7 @@ class Instruction(PolymorphicModel):
     self.instruction_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     self.instruction_count = models.AutoField()
     self.env_id = models.CharField(max_length=50)
+    self.task_id = models.CharField(max_length=50)
     self.user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     self.instruction = models.CharField(max_length=int(1e4))
     self.trajectory = models.ForeignKey(Trajectory, on_delete=models.CASCADE)

@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn.Functional as F
 from torch.distributions.normal import Normal
-from layers import SpatialSoftmax, ConditionalVAE, SeqVAE
+from layers import SpatialSoftmax, ConditionalVAE, SeqVAE, GaussianNetwork
 
 '''
     > D consists  of  paired  {(O_t, a_t)}
@@ -64,11 +64,7 @@ class VisualGoalEncoder(torch.nn.Module):
 
         self.state_dim = state_dim
         self.goal_dim = goal_dim
-        self.lin1 = torch.nn.Linear(state_dim, 2048)
-        self.lin2 = torch.nn.Linear(2048, 2048)
-        self.hidden2mean = torch.nn.Linear(2048, self.goal_dim)
-        self.hidden2logv = torch.nn.Linear(2048, self.goal_dim) 
-        self.relu = torch.nn.ReLU()
+        self.goal_dist = GaussianNetwork(state_dim, goal_dim)
 
     def forward(self, visual_obv, perception_module=None):
         if visual_obv.size() == 2 # To filter dof-obvs
@@ -76,23 +72,15 @@ class VisualGoalEncoder(torch.nn.Module):
         if(visual_obv.size([-1]) != self.state_dim):
             assert perception_module is not None
             visual_obv = perception_module(visual_obv, None)
-        output = self.relu(self.lin1(visual_obv))
-        output = self.relu(self.lin2(output))
-
-        mean = self.hidden2mean(output)
-        logv = self.hidden2logv(output)
-        std = torch.exp(0.5 * logv)
+        z, mean, std = self.goal_dist(visual_obv)
         
-        z = torch.randn([self.goal_dim]) # TODO : Maybe change shaoe to 1,  
-        z = z * std + mean
-
         return z, mean, std
 
 class PlanRecognizerModule(torch.nn.Module):
     ''' 
         A SeqVAE which maps the entire trajectory T to latent space z_p ~ q(z_p|T).
         Represents the posterior distribution over z_p.
-        NOTE : Pass a *single* trajectory [[[Ot/st, at], ... K]] only, where Ot = [Vobv, DOF].
+        NOTE : Pass a *SINGLE* trajectory [[[Ot/st, at], ... K]] only, where Ot = [Vobv, DOF].
         NOTE : Trajectory shape : (1, K, 2) (Batch Size = 1).
     '''
     def __init__(self, max_sequence_length, state_dim=72, latent_dim=256):

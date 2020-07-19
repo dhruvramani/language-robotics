@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset
 
 from data_config import get_dataset_args
-from file_storage import get_trajectory, get_random_trajectory
+from file_storage import get_trajectory, get_random_trajectory, get_instruct_traj
 
 class DataEnvGroup(object):
     ''' + NOTE : Create subclass for every environment, eg.
@@ -13,7 +13,7 @@ class DataEnvGroup(object):
     '''
     def __init__(self, get_episode_type=None):
         ''' + Arguments:
-                - get_episode_type: Get data of a particular episode_type. 
+                - get_episode_type: Get data of a particular episode_type (play, imitation, etc.)
                     > Default : None, get data with any episode_type.
         '''
         self.config = get_dataset_args()
@@ -21,7 +21,8 @@ class DataEnvGroup(object):
         self.env_type = self.config.env_type
         self.max_sequence_length = self.config.max_sequence_length
         self.episode_type = episode_type
-        self.dataset = self.TrajDataset(self.episode_type)
+        self.traj_dataset = self.TrajDataset(self.episode_type, self.config)
+        self.instruct_dataset = self.InstructionDataset(self.config)
 
     def get_env(self):
         raise NotImplementedError
@@ -32,9 +33,10 @@ class DataEnvGroup(object):
         return goal
 
     class TrajDataset(Dataset):
-        def __init__(self, episode_type):
-            super(TrajDataset, self).__init__()
+        def __init__(self, episode_type, config):
+            super(TrajDataset, self).__init__() # TODO : Might not be needed
             self.episode_type = episode_type
+            self.config = config
 
         def __len__(self):
             if self.episode_type is None:
@@ -43,9 +45,23 @@ class DataEnvGroup(object):
                 return self.config.traj_db.objects.filter(episode_type=self.episode_type).count()
 
         def __get_item__(self, idx):
-            # NOTE : HUGE ASSUMPTION - assuming that the sotred shapes are correct.
+            # NOTE : HUGE ASSUMPTION - assuming that the stored shapes are correct.
             # TODO : IMPORTANT - Implement trajectory cropping and all
-            trajectory =  get_trajectory(random=False, index=idx, episode_type=self.episode_type)
+            trajectory =  get_trajectory(index=idx, episode_type=self.episode_type)
             # if self.config.store_as == 'NumpyArray':
             #     trajectory = torch.Tensor(trajectory)
             return trajectory
+
+    class InstructionDataset(Dataset):
+        def __init__(self, config):
+            super(InstructionDataset, self).__init__()
+            self.config = config
+
+        def __len__(self):  
+            self.config.instruct_db.objects.count()
+
+        def __get_item__(self, idx):
+            # TODO : IMPORTANT - Implement trajectory cropping and all
+            instruction, traj = get_instruct_traj(index=idx)
+            return instruction, traj
+

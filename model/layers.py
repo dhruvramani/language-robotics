@@ -3,6 +3,32 @@ import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 import numpy as np
 
+class GaussianNetwork(torch.nn.Module):
+    def __init__(self, in_dim, latent_dim):
+        super(GaussianNetwork, self).__init__()
+        self.in_dim = in_dim
+        self.latent_dim = latent_dim
+
+        self.lin1 = torch.nn.Linear(self.in_dim, 2048)
+        self.lin2 = torch.nn.Linear(2048, 2048)
+        self.relu = torch.nn.ReLU()
+
+        self.hidden2mean = torch.nn.Linear(2048, self.latent_dim)
+        self.hidden2logv = torch.nn.Linear(2048, self.latent_dim) 
+
+    def forward(self, x):
+        output = self.relu(self.lin1(x))
+        output = self.relu(self.lin2(output))
+
+        mean = self.hidden2mean(output)
+        logv = self.hidden2logv(output)
+        std = torch.exp(0.5 * logv)
+        
+        z = torch.randn([self.latent_dim]) # TODO: shape might be [[self.latent_dim]]
+        z = z * std + mean
+
+        return z, mean, std
+
 class SpatialSoftmax(torch.nn.Module):
     ''' 
         Spatial softmax is used to find the expected pixel location of feature maps.

@@ -31,12 +31,29 @@
 
 # o = Outer()
 
-import sys
-import os
+# import sys
+# import os
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-print("hello")
+# sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# print("hello")
 
 
-def foo():
-    print(sys.path)
+# def foo():
+#     print(sys.path)
+import numpy as np
+import torch
+
+class Mod(torch.nn.Module):
+    def __init__(self):
+        super(Mod, self).__init__()
+        self.a = np.array(10)
+        self.b = [1, 2, 4, 5 ]
+        self.lin1 = torch.nn.Linear(10, 20)
+        self.lin2 = torch.nn.Linear(20, 30)
+        self.lin3 = torch.nn.Linear(30, 40)
+
+    def forward(self, x):
+        return self.lin3(self.lin2(self.lin1(x)))
+
+a = Mod()
+print(list(a.state_dict()))
