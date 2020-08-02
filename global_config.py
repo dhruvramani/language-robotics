@@ -3,26 +3,13 @@ import sys
 import json
 import datetime
 import argparse
-import pathlib
+
+import utils
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_env/'))
 
 from dataset_env.surreal_deg import SurrealDataEnvGroup
 from dataset_env.furniture_deg import FurnitureDataEnvGroup
-
-def check_n_create_dir(path):
-    if not os.path.isdir(path):
-        pathlib.Path(path).mkdir(parents=True, exist_ok=True)
-    else:
-        print("Directory {} exists.\n=> Might override or read from there.".format(path))
-
-def str2bool(string):
-    return string.lower() == 'true'
-
-def str2list(string):
-    if not string:
-        return []
-    return [x for x in string.split(",")]
 
 # NOTE : *IMPORTANT* - Use these in model_config & demons_config ONLY.
 # *DEADLOCK* : can lead to deadlock if an object is created in global_config.
@@ -43,6 +30,7 @@ def get_global_parser():
     ''' Global Config - contains global arguments common to all modules.            
         NOTE: All the paths/dirs have env-env_type-exp_name concated to them at the end. 
             - see model/model_config.py for example.
+        TODO *IMPORTANT* : Stack 4-frames together while training and testing?
     '''
 
     parser = argparse.ArgumentParser("Language based robotics",
@@ -52,8 +40,8 @@ def get_global_parser():
     parser.add_argument('--env_type', type=str, default='SawyerPickPlace')
     parser.add_argument('--env_args', type=json.loads, default=def_env_args)
     parser.add_argument('--exp_name', type=str, default='v0.5')
-    parser.add_argument('--use_lang', type=str2bool, default=False)
-    parser.add_argument('--use_visual_models', type=str2bool, default=True, 
+    parser.add_argument('--use_lang', type=utils.str2bool, default=False)
+    parser.add_argument('--use_visual_models', type=utils.str2bool, default=True, 
         help='Load pretrained visual models for lang exps. See model_config.')
     parser.add_argument('--num_obv_types', type=int, default=2)
     parser.add_argument('--max_sequence_length', type=int, default=32)

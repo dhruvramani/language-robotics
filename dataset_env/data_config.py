@@ -5,6 +5,7 @@ import argparse
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/'))
 
+import utils
 from global_config import *
 from traj_db.models import SurrealRoboticsSuiteTrajectory, USCFurnitureTrajectory
 from hindsight_instruction.models import SurrealRoboticsSuiteInstruction, USCFurnitureInstruction
@@ -41,6 +42,9 @@ def get_dataset_args():
     parser.add_argument('--vid_path', type=str, default='vid.mp4')
     parser.add_argument('--fps', type=int, default=30)
     parser.add_argument('--vocab_path', type=str, default=os.path.join(BASE_DIR, 'data_files/vocab.pkl'))
+
+    parser.add_argument('--data_agumentation', type=utils.str2bool, default=False) # WARNING : Don't use now, UNSTABLE.
+    parser.add_argument('--augs', type=utils.str2list, 'crop', help='See others in data_aug.py')
     
     config = parser.parse_args()
     config.traj_db = env2TrajDB(config.env)
@@ -49,8 +53,8 @@ def get_dataset_args():
     config.archives_path = os.path.join(config.archives_path, '{}_{}/'.format(config.env, config.env_type)) 
     config.vid_path = os.path.join(config.media_dir, config.vid_path)
 
-    check_n_create_dir(config.data_path)
-    check_n_create_dir(config.archives_path)
-    check_n_create_dir(config.media_dir)
+    utils.check_n_create_dir(config.data_path)
+    utils.check_n_create_dir(config.archives_path)
+    utils.check_n_create_dir(config.media_dir)
 
     return config

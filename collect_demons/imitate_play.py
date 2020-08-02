@@ -1,3 +1,6 @@
+# TODO : *IMPORTANT* - change the imitation policy to be condtioned on the GROUND STATE rather than visual obv
+#        While running this imitated policy, collect visual_obv w/ domain randomization
+
 import os
 import sys
 import torch

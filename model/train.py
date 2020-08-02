@@ -5,7 +5,6 @@ import torch.nn.Functional as F
 from tqdm import tqdm
 from tensorboardX import SummaryWriter
 
-import utils
 from models import *
 from language_models import *
 
@@ -148,7 +147,7 @@ def train_multi_context_goals(config):
 def train_visual_goals(config):
     '''
         This method is bascially same as train_multi_context_goals when use_lang is turned off. 
-        Might delete later.
+        TODO : Might delete later.
     '''
     deg = config.deg()
     tensorboard_writer = SummaryWriter(logdir=config.tensorboard_path)

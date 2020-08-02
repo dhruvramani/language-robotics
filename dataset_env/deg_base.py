@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
+import data_aug as rad
 from data_config import get_dataset_args
 from file_storage import get_trajectory, get_random_trajectory, get_instruct_traj
 
@@ -48,8 +49,8 @@ class DataEnvGroup(object):
             # NOTE : HUGE ASSUMPTION - assuming that the stored shapes are correct.
             # TODO : IMPORTANT - Implement trajectory cropping and all
             trajectory =  get_trajectory(index=idx, episode_type=self.episode_type)
-            # if self.config.store_as == 'NumpyArray':
-            #     trajectory = torch.Tensor(trajectory)
+            if self.config.data_agumentation:
+                trajectory[:, 0] = rad.apply_augs(trajectory[:, 0], self.config)
             return trajectory
 
     class InstructionDataset(Dataset):
@@ -63,5 +64,7 @@ class DataEnvGroup(object):
         def __get_item__(self, idx):
             # TODO : IMPORTANT - Implement trajectory cropping and all
             instruction, traj = get_instruct_traj(index=idx)
+             if self.config.data_agumentation:
+                traj[:, 0] = rad.apply_augs(traj[:, 0], self.config)
             return instruction, traj
 
