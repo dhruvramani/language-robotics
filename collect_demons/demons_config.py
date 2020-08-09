@@ -20,6 +20,7 @@ def get_demons_args():
 
     # To store the model for imitating the play-data
     parser.add_argument('--train_imitation', type=utils.str2bool, default=False)
+    parser.add_argument('--models_save_path', type=str, default=os.path.join(BASE_DIR, 'runs/imitation-models/'))
     parser.add_argument('--tensorboard_path', type=str, default=os.path.join(BASE_DIR, 'runs/imitation-tensorboard/'))
     parser.add_argument('--load_models', type=utils.str2bool, default=True)
     parser.add_argument('--use_model_perception_module', type=utils.str2bool, default=True)
@@ -28,7 +29,7 @@ def get_demons_args():
     config = parser.parse_args()
     config.deg = env2deg(config.env)
     config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
-    config.models_save_path = os.path.join(BASE_DIR, 'runs/imitation-models/{}_{}/'.format(config.env, config.env_type))
+    config.models_save_path = os.path.join(config.models_save_path, '{}_{}/'.format(config.env, config.env_type))
     config.tensorboard_path = os.path.join(config.tensorboard_path, '{}_{}_{}/'.format(config.env, config.env_type, config.exp_name)) 
 
     utils.check_n_create_dir(config.data_path)

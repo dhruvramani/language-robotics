@@ -18,6 +18,7 @@ def get_model_args():
     parser.add_argument('--resume', type=utils.str2bool, default=False)
     parser.add_argument('--num_workers', type=int, default=1)
     parser.add_argument('--tensorboard_path', type=str, default=os.path.join(BASE_DIR, 'runs/tensorboard/'))
+    parser.add_argument('--models_save_path', type=str, default=os.path.join(BASE_DIR, 'runs/models/'))
     parser.add_argument('--save_graphs', type=utils.str2bool, default=False)
     parser.add_argument('--save_interval_steps', type=int, default=100)
     parser.add_argument('--save_interval_epoch', type=int, default=10)

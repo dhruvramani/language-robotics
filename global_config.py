@@ -45,7 +45,6 @@ def get_global_parser():
         help='Load pretrained visual models for lang exps. See model_config.')
     parser.add_argument('--num_obv_types', type=int, default=2)
     parser.add_argument('--max_sequence_length', type=int, default=32)
-    parser.add_argument('--models_save_path', type=str, default=os.path.join(BASE_DIR, 'runs/models/'))
     parser.add_argument('--data_path', type=str, default=os.path.join(BASE_DIR, 'data_files/saved_data/'))
 
     return parser

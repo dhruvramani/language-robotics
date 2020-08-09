@@ -53,6 +53,7 @@ def train_multi_context_goals(config):
 
     if(config.resume):
         # TODO : IMPORTANT - Check if file exist before loading
+        # TODO : Implement load & save functions within the class for easier loading and saving
         perception_module.load_state_dict(torch.load(os.path.join(config.models_save_path, 'perception.pth')))
         visual_goal_encoder.load_state_dict(torch.load(os.path.join(config.models_save_path, 'visual_goal.pth')))
         plan_recognizer.load_state_dict(torch.load(os.path.join(config.models_save_path, 'plan_recognizer.pth')))
