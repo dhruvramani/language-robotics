@@ -3,14 +3,6 @@ from django.db import models
 from django.conf import settings
 from polymorphic.models import PolymorphicModel
 
-class SurrealRoboticsSuiteTrajectory(Trajectory):
-    ''' Trajectory table for Surreal Robotics Suite environment. '''
-    pass
-
-class USCFurnitureTrajectory(Trajectory):
-    ''' Trajectory table for USC's Furniture environment. '''
-    pass
-
 class Trajectory(PolymorphicModel):
     ''' Abstract table desicribing trajectory schema.
         NOTE : ABSTRACT CLASS - Create a new subclass/table for each Env.
@@ -60,6 +52,14 @@ class Trajectory(PolymorphicModel):
 
     def __str__(self):
         return "{} : {}".format(self.env_id, self.episode_id)
+
+class SurrealRoboticsSuiteTrajectory(Trajectory):
+    ''' Trajectory table for Surreal Robotics Suite environment. '''
+    pass
+
+class USCFurnitureTrajectory(Trajectory):
+    ''' Trajectory table for USC's Furniture environment. '''
+    pass
 
 class TrajectoryTag(models.Model):
     '''Table of tags that can be attached to episodes.
