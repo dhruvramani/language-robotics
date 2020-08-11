@@ -24,16 +24,16 @@ class Instruction(PolymorphicModel):
                 > Chosen this way as a single trajectoy can have multiple instructions.
                 > Also while training, we only need trajectoies containing instructions. Easier this way.
     ''' 
-    self.instruction_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    self.instruction_count = models.AutoField()
-    self.env_id = models.CharField(max_length=50)
-    self.task_id = models.CharField(max_length=50)
-    self.user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    self.instruction = models.CharField(max_length=int(1e4))
-    self.trajectory = models.ForeignKey(Trajectory, on_delete=models.CASCADE)
+    instruction_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    instruction_count = models.AutoField()
+    env_id = models.CharField(max_length=50)
+    task_id = models.CharField(max_length=50)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    instruction = models.CharField(max_length=int(1e4))
+    trajectory = models.ForeignKey(Trajectory, on_delete=models.CASCADE)
 
     def __str__(self):
-        return "{} : {}".format(self.env_id, self.instruction)
+        return "{} : {}".format(env_id, instruction)
 
 class SurrealRoboticsSuiteInstruction(Instruction):
     ''' Instruction table for Surreal Robotics Suite environment. '''
