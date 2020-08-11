@@ -3,6 +3,19 @@ from django.db import models
 from django.conf import settings
 from polymorphic.models import PolymorphicModel
 
+class TrajectoryTag(models.Model):
+    '''Table of tags that can be attached to episodes.
+  
+        + Attributes:
+            - name: Human readable tag name.
+
+        object.trajectory_set : The epsidoes that have been annotated with this tag.
+    '''
+    name = models.CharField(max_length=75)
+    
+    def __str__(self):
+        return name
+
 class Trajectory(PolymorphicModel):
     ''' Abstract table desicribing trajectory schema.
         NOTE : ABSTRACT CLASS - Create a new subclass/table for each Env.
@@ -60,19 +73,6 @@ class SurrealRoboticsSuiteTrajectory(Trajectory):
 class USCFurnitureTrajectory(Trajectory):
     ''' Trajectory table for USC's Furniture environment. '''
     pass
-
-class TrajectoryTag(models.Model):
-    '''Table of tags that can be attached to episodes.
-  
-        + Attributes:
-            - name: Human readable tag name.
-
-        object.trajectory_set : The epsidoes that have been annotated with this tag.
-    '''
-    name = models.CharField(max_length=75)
-    
-    def __str__(self):
-        return name
 
 class ArchiveFile(models.Model):
     ''' Table describing where episodes are stored in archives.
