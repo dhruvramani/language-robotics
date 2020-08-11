@@ -5,7 +5,7 @@ import os
 import sys
 import torch
 import torch.nn.Functional as F
-from tqdm import tqdm
+from tqdm import tqdm # TODO : Remove TQDMs
 from tensorboardX import SummaryWriter
 from torch.distributions.normal import Normal
 

@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'traj_db.apps.TrajDbConfig',
     'hindsight_instruction.apps.HindsightInstructionConfig',
     'polymorphic',
-    'django.contrib.contenttypes',
 ]
 
 MIDDLEWARE = [
