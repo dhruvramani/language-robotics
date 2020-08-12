@@ -10,7 +10,8 @@ from global_config import *
 def get_demons_args():
     parser = get_global_parser()
     parser.add_argument('--deg', type=env2deg, default='SURREAL')
-    parser.add_argument("--collect_by", type=str, default='play', choices=['play', 'imitation', 'expert', 'policy', 'exploration'])
+    # TODO : Change later
+    parser.add_argument("--collect_by", type=str, default='random', choices=['play', 'imitation', 'expert', 'policy', 'exploration', 'random'])
     parser.add_argument("--device", type=str, default="keyboard", choices=["keyboard", "spacemouse"])
     parser.add_argument("--collect_freq", type=int, default=1)
     parser.add_argument("--flush_freq", type=int, default=75) # NOTE : RAM Issues, change here

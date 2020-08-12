@@ -1,4 +1,4 @@
-from furniture.env import make_env
+#from furniture.env import make_env
 from deg_base import DataEnvGroup
 
 # TODO

@@ -1,6 +1,6 @@
 ## TODO 
 
-To run the usual commands on manage.py, run `python3 manage.py` and enter command when prompted. Had to edit it out (see `manage.py`) due to errors with argv and configs.
+To run the usual commands on manage.py, run `python3 manage.py` and enter command when prompted. Had to edit it out (see `manage.py`) due to errors with argv and configs. For running `runserver`, type the command twice (as prompted).
 
 Commands to run when setting up from scratch.
 ```

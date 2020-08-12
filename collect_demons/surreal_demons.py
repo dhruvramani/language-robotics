@@ -105,11 +105,35 @@ def collect_human_demonstrations(config):
 
         env.close()
 
+def collect_random_demonstration(config):
+    assert config.env == 'SURREAL'
+    deg = config.deg()
+    env = deg.get_env()
+    obs = env.reset()
+    env.set_robot_joint_positions([0, -1.18, 0.00, 2.18, 0.00, 0.57, 1.5708]) 
+
+    trajectory = []
+    for step in range(5):
+        obv_2_store = np.array([obs[deg.vis_obv_key], obs[deg.dof_obv_key].flatten()])
+        action = np.random.randn(env.dof)
+        obs, reward, done, info = env.step(action)
+
+        traj = np.array([obv_2_store, action])
+        traj = np.expand_dims(traj, 0)
+        if type(trajectory) == list and len(trajectory) == 0:
+            trajectory = traj
+        else:
+            trajectory = np.concatenate((trajectory, traj), 0)
+    
+    store_trajectoy(trajectory, 'random')
+    env.close()
+
 if __name__ == "__main__":
     demon_config = get_demons_args()
     if demon_config.collect_by == 'play':
         collect_human_demonstrations(demon_config)
-    
+    elif demon_config.collect_by == 'random':
+        collect_random_demonstration(demon_config)
     elif demons_config.collect_by == 'imitation':
         import imitate_play
         

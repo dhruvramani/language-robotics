@@ -9,9 +9,13 @@ import torchvision
 from random import randint
 from data_config import get_dataset_args, ep_type
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/traj_db/'))
+from PIL import Image
+
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../traj_db/'))
 
 config = get_dataset_args()
+
+from traj_db.models import ArchiveFile
 
 def get_vocab2idx():
     vocab = []
@@ -105,8 +109,8 @@ def get_trajectory(episode_type=None, index=None, episode_id=None):
     trajectory = None
     if config.store_as == 'TorchTensor':
         trajectory = torch.load(metadata.data_path)
-    elif onfig.store_as == 'NumpyArray':
-        trajectory = np.load(metadata.data_path)
+    elif config.store_as == 'NumpyArray':
+        trajectory = np.load(metadata.data_path, allow_pickle=True)
 
     return trajectory
 
@@ -117,7 +121,7 @@ def get_random_trajectory(episode_type=None):
             - episode_type [optional]: if you want trajectory specific to one episode_type (eg. 'play' or 'imitation')
     '''
     count = config.traj_db.objects.count()
-    random_index = randint(1, count - 1)
+    random_index = randint(1, count)
     if episode_type is None:
         metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index)
     else:
@@ -126,8 +130,8 @@ def get_random_trajectory(episode_type=None):
     trajectory = None
     if config.store_as == 'TorchTensor':
         trajectory = torch.load(metadata.data_path)
-    elif onfig.store_as == 'NumpyArray':
-        trajectory = np.load(metadata.data_path)
+    elif config.store_as == 'NumpyArray':
+        trajectory = np.load(metadata.data_path, allow_pickle=True)
 
     return trajectory, str(metadata.episode_id)
 
@@ -136,19 +140,23 @@ def create_video(trajectory):
     '''
         Creates videos and stores video, the initial and the final frame in the paths specified in data_config. 
         + Arguments:
-            - trajectory : [[Ot/st, at], ... K] only, where Ot = [Vobv, DOF].
+            - trajectory : [[Ot, at], ... K] only, where Ot = [Vobv, DOF].
     '''
-    trajectory = trajectory[:, 0]
-    assert trajectory.shape[-1] == 3
+
+    frames = np.zeros((trajectory.shape[0], ) + trajectory[0, 0][0].shape).astype(np.uint8)
+    for i in range(trajectory.shape[0]):
+        frames[i, :] = trajectory[i, 0][0].astype(np.uint8)
+
+    assert frames.shape[-1] == 3
     
-    if type(trajectory) is not torch.Tensor:
-        trajectory = torch.FloatTensor(trajectory)
+    inital_obv, goal_obv = Image.fromarray(frames[0]), Image.fromarray(frames[-1])
+    inital_obv.save(os.path.join(config.media_dir, 'inital.png'))
+    goal_obv.save(os.path.join(config.media_dir, 'goal.png'))
 
-    inital_obv, goal_obv = trajectory[0], trajectory[-1]
-    torchvision.utils.save_image(inital_obv, os.path.join(config.media_dir, 'inital.png'))
-    torchvision.utils.save_image(goal_obv, os.path.join(config.media_dir, 'goal.png'))
+    if type(frames) is not torch.Tensor:
+        frames = torch.from_numpy(frames)
 
-    torchvision.io.write_video(config.vid_path, trajectory, config.fps)
+    torchvision.io.write_video(config.vid_path, frames, config.fps)
     return config.vid_path
 
 
@@ -160,9 +168,7 @@ def archive_traj_task(task=config.env_type, episode_type=None, file_name=None):
             - episode_type [optional]: store trajectories w/ same task, episode_type together.
             - file_name: the name of the archive file. [NOTE: NOT THE PATH]
                 >  NOTE : default file_name: `env_task.tar.gz`
-    '''
-    from models import ArchiveFile
-    
+    '''    
     if episode_type is None:
         objects = config.traj_db.objects.get(task_id=task)
         f_name = "{}_{}.tar.gz".format(config.env, config.env_type)
@@ -188,4 +194,7 @@ def archive_traj_task(task=config.env_type, episode_type=None, file_name=None):
     tar.close()
 
 def delete_trajectory(episode_id):
-    config.traj_db.objects.filter(episode_id=episode_id).delete()
+    obj = config.traj_db.objects.get(episode_id=episode_id)
+    if os.path.exists(obj.data_path):
+        os.remove(obj.data_path)
+    obj.delete()

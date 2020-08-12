@@ -39,7 +39,7 @@ class PlayGenerationModule(torch.nn.Module):
 
         # NOTE : Original paper used a Mixture of Logistic (MoL) dist. Implement later.
         self.hidden2mean = torch.Linear(self.hidden_size, self.action_dim)
-        log_std = -0.5 * np.ones(self.action_dim, dtype=np.float32)
+        log_std = -0.5 * np.ones(self.action_dim, dtype=np.np.float32)
         self.log_std = torch.nn.Parameter(torch.as_tensor(log_std))
 
         # The hidden states of the RNN.

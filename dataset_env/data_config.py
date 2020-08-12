@@ -1,9 +1,13 @@
 import os
 import sys
 import argparse
+import django
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/'))
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "web_db.settings")
+django.setup()
 
 import utils
 from global_config import get_global_parser, DATA_DIR, BASE_DIR
@@ -26,7 +30,7 @@ def env2InstructDB(string):
 def ep_type(string):
     ep_dict = {'play': 'EPISODE_ROBOT_PLAY', 'imitation': 'EPISODE_ROBOT_IMITATED',
                 'expert': 'EPISODE_ROBOT_EXPERT', 'policy': 'EPISODE_ROBOT_POLICY',
-                'exploration': 'EPISODE_ROBOT_EXPLORED'}
+                'exploration': 'EPISODE_ROBOT_EXPLORED', 'random': 'EPISODE_ROBOT_RANDOM'}
     return ep_dict[string.lower()]
 
 def get_dataset_args():
@@ -37,7 +41,7 @@ def get_dataset_args():
     parser.add_argument('--instruct_db', type=env2InstructDB, default='SURREAL')
     parser.add_argument('--archives_path', type=str, default=os.path.join(DATA_DIR, 'data_files/archives'))
     parser.add_argument('--store_as', type=str, default='NumpyArray', choices=['TorchTensor', 'NumpyArray'])
-    parser.add_argument('--episode_type', type=ep_type, default='play', choices=['play', 'imitation', 'expert', 'policy', 'exploration'])
+    parser.add_argument('--episode_type', type=ep_type, default='play', choices=['play', 'imitation', 'expert', 'policy', 'exploration', 'random'])
     parser.add_argument('--media_dir', type=str, default=os.path.join(BASE_DIR, 'web_db/static/media/'))
     parser.add_argument('--vid_path', type=str, default='vid.mp4')
     parser.add_argument('--fps', type=int, default=30)

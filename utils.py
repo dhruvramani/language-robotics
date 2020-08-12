@@ -6,7 +6,7 @@ def check_n_create_dir(path):
     if not os.path.isdir(path):
         pathlib.Path(path).mkdir(parents=True, exist_ok=True)
     else:
-        print("Directory {} exists.\n=> Might override or read from there.".format(path))
+        print("=> Directory {} exists (no new directory created).".format(path))
 
 def str2bool(string):
     return string.lower() == 'true'

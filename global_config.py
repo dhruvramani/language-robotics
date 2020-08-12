@@ -13,7 +13,8 @@ BASE_DIR = os.path.dirname((os.path.abspath(__file__)))
 DATA_DIR = '/scratch/scratch2/dhruvramani/language-robotics_data'
 TIME_STAMP = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-def_env_args = dict(has_renderer=True, has_offscreen_renderer=True, ignore_done=True, use_camera_obs=True,  
+# TODO : Set has_renderer=True when possible
+def_env_args = dict(has_renderer=False, has_offscreen_renderer=True, ignore_done=True, use_camera_obs=True,  
     camera_height=84, camera_width=84, camera_name='agentview', use_object_obs=False, reward_shaping=True)
 def_env_args = json.dumps(def_env_args)
 

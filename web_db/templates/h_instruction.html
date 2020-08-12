@@ -1,3 +1,5 @@
+{% extends 'base.html' %}
+{% load static%}
 {% block title %} Hindsight Labelling {% endblock title %}
 {% block content %}
 
@@ -34,8 +36,18 @@
         </div>
     </div>
 
-    <form method="post"> {% csrf_token %}
+    <form method="POST"> {% csrf_token %}
         <div class="columns">
+            <div class="column is-4">
+                <div class="field has-addons">
+                    <p class="control">
+                        <a class="button is-static">Trajectory ID</a>
+                    </p>
+                    <p class="control">
+                        <input class="input" type="text" name="episode_id" value="{{ episode_id }}" maxlength="36" readonly />
+                    </p>
+                </div>
+            </div>
             <div class="column is-8">
                 <div class="field has-addons">
                     <label class="label">Task Instruction</label>
@@ -46,16 +58,6 @@
                         <input class="button is-primary" type="submit">Submit</input>
                     </div>
                     <p class="help">What instruction does the robot need to follow to get to the goal?</p>
-                </div>
-            </div>
-            <div class="column is-4">
-                <div class="field has-addons">
-                    <p class="control">
-                        <a class="button is-static">Trajectory ID</a>
-                    </p>
-                    <p class="control">
-                        <input class="input" type="text" name="episode_id" value="{{ episode_id }}" maxlength="36" disabled>
-                    </p>
                 </div>
             </div>
         </div>

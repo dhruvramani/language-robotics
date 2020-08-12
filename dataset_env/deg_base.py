@@ -21,7 +21,7 @@ class DataEnvGroup(object):
         self.env_name = self.config.env
         self.env_type = self.config.env_type
         self.max_sequence_length = self.config.max_sequence_length
-        self.episode_type = episode_type
+        self.episode_type = get_episode_type
         self.traj_dataset = self.TrajDataset(self.episode_type, self.config)
         self.instruct_dataset = self.InstructionDataset(self.config)
 
@@ -35,7 +35,6 @@ class DataEnvGroup(object):
 
     class TrajDataset(Dataset):
         def __init__(self, episode_type, config):
-            super(TrajDataset, self).__init__() # TODO : Might not be needed
             self.episode_type = episode_type
             self.config = config
 
@@ -55,7 +54,6 @@ class DataEnvGroup(object):
 
     class InstructionDataset(Dataset):
         def __init__(self, config):
-            super(InstructionDataset, self).__init__()
             self.config = config
 
         def __len__(self):  

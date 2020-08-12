@@ -34,22 +34,30 @@ class Instruction(PolymorphicModel):
     trajectory = models.ForeignKey(Trajectory, on_delete=models.CASCADE)
 
     def __str__(self):
-        return "{} : {}".format(env_id, instruction)
+        return "{} : {}".format(self.env_id, self.instruction)
 
+class SurrealRoboticsSuiteInstruction(Instruction):
+    ''' Instruction table for Surreal Robotics Suite environment. '''
+    
     def save(self, *args, **kwargs):
         # This means that the model isn't saved to the database yet
         if self._state.adding:
-            last_count = self.objects.all().aggregate(largest=models.Max('instruction_count'))['largest']
+            last_count = SurrealRoboticsSuiteInstruction.objects.all().aggregate(largest=models.Max('instruction_count'))['largest']
             
             if last_count is not None:
                 self.instruction_count = last_count + 1
 
-        super(Instruction, self).save(*args, **kwargs)
-
-class SurrealRoboticsSuiteInstruction(Instruction):
-    ''' Instruction table for Surreal Robotics Suite environment. '''
-    pass
+        super(SurrealRoboticsSuiteInstruction, self).save(*args, **kwargs)
 
 class USCFurnitureInstruction(Instruction):
     '''Instruction table for USC's Furniture environment. '''
-    pass
+    
+    def save(self, *args, **kwargs):
+        # This means that the model isn't saved to the database yet
+        if self._state.adding:
+            last_count = USCFurnitureInstruction.objects.all().aggregate(largest=models.Max('instruction_count'))['largest']
+            
+            if last_count is not None:
+                self.instruction_count = last_count + 1
+
+        super(USCFurnitureInstruction, self).save(*args, **kwargs)

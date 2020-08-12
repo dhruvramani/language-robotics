@@ -2,7 +2,6 @@ import os
 import sys
 import uuid
 from django.shortcuts import render
-from .forms import InstructionForm
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../dataset_env'))
 
@@ -14,18 +13,15 @@ config = get_dataset_args()
 def hindsight_instruction(request):
     save_success = False
     if request.method == 'POST':
-        instruction_form = InstructionForm(request.POST)
+        episode_id = uuid.UUID(request.POST['episode_id'])
+        instruction = request.POST['instruction'].lower()
+        #add_vocab(instruction)
         
-        if instruction_form.is_valid():
-            episode_id = uuid.UUID(instruction_form.cleaned_data['episode_id'])
-            instruction = instruction_form.cleaned_data['instruction'].lower()
-            add_vocab(instruction)
-            
-            trajectory = config.traj_db.objects.get(episode_id=episode_id)
-            instruct_obj = config.instruct_db(env_id=trajectory.env_id, user=request.user, 
-                instruction=instruction, trajectory=trajectory, task_id=trajectory.task_id)
-            instruct_obj.save()
-            save_success = True
+        trajectory = config.traj_db.objects.get(episode_id=episode_id)
+        instruct_obj = config.instruct_db(env_id=trajectory.env_id, user=request.user, 
+            instruction=instruction, trajectory=trajectory, task_id=trajectory.task_id)
+        instruct_obj.save()
+        save_success = True
 
     trajectory, episode_id = get_random_trajectory()
     vid_path = create_video(trajectory)
