@@ -7,6 +7,7 @@ import argparse
 import utils
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_env/'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_env/surreal'))
 
 from dataset_env.surreal_deg import SurrealDataEnvGroup
 from dataset_env.furniture_deg import FurnitureDataEnvGroup

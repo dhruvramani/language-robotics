@@ -10,9 +10,9 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../dat
 from file_storage import store_trajectoy
 from surreal_deg import SurrealDataEnvGroup
 
-from robosuite import robosuite
-from robosuite.robosuite.wrappers import IKWrapper
-import robosuite.robosuite.utils.transform_utils as T
+from surreal import robosuite
+from surreal.robosuite.wrappers import IKWrapper
+import surreal.robosuite.utils.transform_utils as T
 
 def collect_human_demonstrations(config):
     assert config.env == 'SURREAL'
@@ -22,13 +22,13 @@ def collect_human_demonstrations(config):
     env = IKWrapper(env)
     
     if config.device == "keyboard":
-        from robosuite.robosuite.devices import Keyboard
+        from surreal.robosuite.devices import Keyboard
         device = Keyboard()
         env.viewer.add_keypress_callback("any", device.on_press)
         env.viewer.add_keyup_callback("any", device.on_release)
         env.viewer.add_keyrepeat_callback("any", device.on_press)
     elif config.device == "spacemouse":
-        from robosuite.robosuite.devices import SpaceMouse
+        from surreal.robosuite.devices import SpaceMouse
         device = SpaceMouse()
 
     for run in range(config.n_runs):

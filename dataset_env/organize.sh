@@ -2,6 +2,8 @@
 git clone https://github.com/StanfordVL/robosuite.git
 cd robosuite
 pip3 install -r requirements-extra.txt
+cd ../
+mv ./robosuite ./surreal
 
 # # USC's Furniture Dataset
 # git clone https://github.com/clvrai/furniture
@@ -19,5 +21,3 @@ pip3 install -r requirements-extra.txt
 # # sudo nvidia-xconfig -a --use-display-device=None --virtual=1280x1024
 # # sudo /usr/bin/X :1 &
 # # python -m demo_manual --virtual_display :1
-
-cd ../

@@ -1,4 +1,4 @@
-import robosuite.robosuite as suite
+import surreal.robosuite as suite
 from collections import OrderedDict
 
 from deg_base import DataEnvGroup
