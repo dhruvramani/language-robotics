@@ -9,25 +9,6 @@ import torch.nn.functional as F
 
 # NOTE : Source - RAD (https://github.com/MishaLaskin/rad)
 
-aug_to_func = {
-    'crop': random_crop,
-    'grayscale': random_grayscale,
-    'cutout': random_cutout,
-    'cutout_color': random_cutout_color,
-    'flip': random_flip,
-    'rotate': random_rotation,
-    'rand_conv': random_convolution,
-    'color_jitter': random_color_jitter,
-    'no_aug': no_aug,
-}
-
-def apply_augs(images, config):
-    for aug in config.augs:
-        n, h, w, c = images.shape 
-        images = np.reshape(images, (n, c, h, w))
-        images = aug_to_func[aug](images)
-    return images
-
 def random_crop(images, out=192):
     '''
         + Arguments:
@@ -432,3 +413,23 @@ class ColorJitterLayer(nn.Module):
         if random_inds.sum() > 0:
             inputs[inds] = self.transform(inputs[inds])
         return inputs
+
+
+aug_to_func = {
+    'crop': random_crop,
+    'grayscale': random_grayscale,
+    'cutout': random_cutout,
+    'cutout_color': random_cutout_color,
+    'flip': random_flip,
+    'rotate': random_rotation,
+    'rand_conv': random_convolution,
+    'color_jitter': random_color_jitter,
+    'no_aug': no_aug,
+}
+
+def apply_augs(images, config):
+    for aug in config.augs:
+        n, h, w, c = images.shape 
+        images = np.reshape(images, (n, c, h, w))
+        images = aug_to_func[aug](images)
+    return images

@@ -64,7 +64,7 @@ class DataEnvGroup(object):
         def __get_item__(self, idx):
             # TODO : IMPORTANT - Implement trajectory cropping and all
             instruction, traj = get_instruct_traj(index=idx)
-             if self.config.data_agumentation:
+            if self.config.data_agumentation:
                 traj[:, 0] = rad.apply_augs(traj[:, 0], self.config)
             return instruction, traj
 

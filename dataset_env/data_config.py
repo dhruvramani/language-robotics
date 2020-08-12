@@ -6,7 +6,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/'))
 
 import utils
-from global_config import *
+from global_config import get_global_parser, BASE_DIR
 from traj_db.models import SurrealRoboticsSuiteTrajectory, USCFurnitureTrajectory
 from hindsight_instruction.models import SurrealRoboticsSuiteInstruction, USCFurnitureInstruction
 
