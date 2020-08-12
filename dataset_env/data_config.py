@@ -44,7 +44,7 @@ def get_dataset_args():
     parser.add_argument('--vocab_path', type=str, default=os.path.join(BASE_DIR, 'data_files/vocab.pkl'))
 
     parser.add_argument('--data_agumentation', type=utils.str2bool, default=False) # WARNING : Don't use now, UNSTABLE.
-    parser.add_argument('--augs', type=utils.str2list, 'crop', help='See others in data_aug.py')
+    parser.add_argument('--augs', type=utils.str2list, default='crop', help='See others in data_aug.py')
     
     config = parser.parse_args()
     config.traj_db = env2TrajDB(config.env)

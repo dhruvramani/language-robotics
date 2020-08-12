@@ -1,6 +1,6 @@
 # Byte-compiled / optimized / DLL files
-dataset_env/robosuite
-dataset_env/furniture
+#dataset_env/robosuite
+#dataset_env/furniture
 __pycache__/
 *.py[cod]
 *$py.class
