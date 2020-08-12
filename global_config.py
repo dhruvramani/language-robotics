@@ -9,18 +9,8 @@ import utils
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_env/'))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_env/surreal'))
 
-from dataset_env.surreal_deg import SurrealDataEnvGroup
-from dataset_env.furniture_deg import FurnitureDataEnvGroup
-
-# NOTE : *IMPORTANT* - Use these in model_config & demons_config ONLY.
-# *DEADLOCK* : can lead to deadlock if an object is created in global_config.
-env2deg_dict = {'SURREAL' : SurrealDataEnvGroup, 'FURNITURE' : FurnitureDataEnvGroup}
-def env2deg(env_name):
-    if env_name is None:
-        return None
-    return env2deg_dict[env_name.upper()]
-
 BASE_DIR = os.path.dirname((os.path.abspath(__file__)))
+DATA_DIR = '/scratch/scratch2/dhruvramani/language-robotics_data'
 TIME_STAMP = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
 def_env_args = dict(has_renderer=True, has_offscreen_renderer=True, ignore_done=True, use_camera_obs=True,  
@@ -46,6 +36,18 @@ def get_global_parser():
         help='Load pretrained visual models for lang exps. See model_config.')
     parser.add_argument('--num_obv_types', type=int, default=2)
     parser.add_argument('--max_sequence_length', type=int, default=32)
-    parser.add_argument('--data_path', type=str, default=os.path.join(BASE_DIR, 'data_files/saved_data/'))
+    parser.add_argument('--data_path', type=str, default=os.path.join(DATA_DIR, 'data_files/saved_data/'))
 
     return parser
+
+def env2deg(env_name):
+    from dataset_env.surreal_deg import SurrealDataEnvGroup
+    from dataset_env.furniture_deg import FurnitureDataEnvGroup
+
+    # NOTE : *IMPORTANT* - Use these in model_config & demons_config ONLY.
+    # *DEADLOCK* : can lead to deadlock if an object is created in global_config.
+    env2deg_dict = {'SURREAL' : SurrealDataEnvGroup, 'FURNITURE' : FurnitureDataEnvGroup}
+
+    if env_name is None:
+        return None
+    return env2deg_dict[env_name.upper()]

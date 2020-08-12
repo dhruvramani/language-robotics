@@ -53,7 +53,7 @@ class Trajectory(PolymorphicModel):
     ]
 
     episode_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    traj_count = models.AutoField()
+    traj_count =  models.IntegerField(default=1)
     env_id = models.CharField(max_length=50)
     task_id = models.CharField(max_length=50)
     traj_steps = models.IntegerField()
@@ -65,6 +65,16 @@ class Trajectory(PolymorphicModel):
 
     def __str__(self):
         return "{} : {}".format(env_id, episode_id)
+
+    def save(self, *args, **kwargs):
+        # This means that the model isn't saved to the database yet
+        if self._state.adding:
+            last_count = self.objects.all().aggregate(largest=models.Max('traj_count'))['largest']
+            
+            if last_count is not None:
+                self.traj_count = last_count + 1
+
+        super(Trajectory, self).save(*args, **kwargs)
 
 class SurrealRoboticsSuiteTrajectory(Trajectory):
     ''' Trajectory table for Surreal Robotics Suite environment. '''

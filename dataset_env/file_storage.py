@@ -11,8 +11,6 @@ from data_config import get_dataset_args, ep_type
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/traj_db/'))
 
-from models import ArchiveFile
-
 config = get_dataset_args()
 
 def get_vocab2idx():
@@ -123,7 +121,7 @@ def get_random_trajectory(episode_type=None):
     if episode_type is None:
         metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index)
     else:
-        metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index, episode_type=episode_type)))
+        metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index, episode_type=episode_type)
     
     trajectory = None
     if config.store_as == 'TorchTensor':
@@ -163,6 +161,8 @@ def archive_traj_task(task=config.env_type, episode_type=None, file_name=None):
             - file_name: the name of the archive file. [NOTE: NOT THE PATH]
                 >  NOTE : default file_name: `env_task.tar.gz`
     '''
+    from models import ArchiveFile
+    
     if episode_type is None:
         objects = config.traj_db.objects.get(task_id=task)
         f_name = "{}_{}.tar.gz".format(config.env, config.env_type)

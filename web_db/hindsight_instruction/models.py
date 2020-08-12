@@ -26,7 +26,7 @@ class Instruction(PolymorphicModel):
                 > Also while training, we only need trajectoies containing instructions. Easier this way.
     ''' 
     instruction_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    instruction_count = models.AutoField()
+    instruction_count =  models.IntegerField(default=1)
     env_id = models.CharField(max_length=50)
     task_id = models.CharField(max_length=50)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -35,6 +35,16 @@ class Instruction(PolymorphicModel):
 
     def __str__(self):
         return "{} : {}".format(env_id, instruction)
+
+    def save(self, *args, **kwargs):
+        # This means that the model isn't saved to the database yet
+        if self._state.adding:
+            last_count = self.objects.all().aggregate(largest=models.Max('instruction_count'))['largest']
+            
+            if last_count is not None:
+                self.instruction_count = last_count + 1
+
+        super(Instruction, self).save(*args, **kwargs)
 
 class SurrealRoboticsSuiteInstruction(Instruction):
     ''' Instruction table for Surreal Robotics Suite environment. '''

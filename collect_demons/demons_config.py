@@ -20,8 +20,8 @@ def get_demons_args():
 
     # To store the model for imitating the play-data
     parser.add_argument('--train_imitation', type=utils.str2bool, default=False)
-    parser.add_argument('--models_save_path', type=str, default=os.path.join(BASE_DIR, 'runs/imitation-models/'))
-    parser.add_argument('--tensorboard_path', type=str, default=os.path.join(BASE_DIR, 'runs/imitation-tensorboard/'))
+    parser.add_argument('--models_save_path', type=str, default=os.path.join(DATA_DIR, 'runs/imitation-models/'))
+    parser.add_argument('--tensorboard_path', type=str, default=os.path.join(DATA_DIR, 'runs/imitation-tensorboard/'))
     parser.add_argument('--load_models', type=utils.str2bool, default=True)
     parser.add_argument('--use_model_perception_module', type=utils.str2bool, default=True)
     parser.add_argument('--n_gen_traj', type=int, default=200, help="Number of trajectories to generate by imitation")

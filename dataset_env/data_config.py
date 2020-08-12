@@ -6,7 +6,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/'))
 
 import utils
-from global_config import get_global_parser, BASE_DIR
+from global_config import get_global_parser, DATA_DIR, BASE_DIR
 from traj_db.models import SurrealRoboticsSuiteTrajectory, USCFurnitureTrajectory
 from hindsight_instruction.models import SurrealRoboticsSuiteInstruction, USCFurnitureInstruction
 
@@ -35,13 +35,13 @@ def get_dataset_args():
     # NOTE : Replaced by env_name below. v
     parser.add_argument('--traj_db', type=env2TrajDB, default='SURREAL')
     parser.add_argument('--instruct_db', type=env2InstructDB, default='SURREAL')
-    parser.add_argument('--archives_path', type=str, default=os.path.join(BASE_DIR, 'data_files/archives'))
+    parser.add_argument('--archives_path', type=str, default=os.path.join(DATA_DIR, 'data_files/archives'))
     parser.add_argument('--store_as', type=str, default='NumpyArray', choices=['TorchTensor', 'NumpyArray'])
     parser.add_argument('--episode_type', type=ep_type, default='play', choices=['play', 'imitation', 'expert', 'policy', 'exploration'])
     parser.add_argument('--media_dir', type=str, default=os.path.join(BASE_DIR, 'web_db/static/media/'))
     parser.add_argument('--vid_path', type=str, default='vid.mp4')
     parser.add_argument('--fps', type=int, default=30)
-    parser.add_argument('--vocab_path', type=str, default=os.path.join(BASE_DIR, 'data_files/vocab.pkl'))
+    parser.add_argument('--vocab_path', type=str, default=os.path.join(DATA_DIR, 'data_files/vocab.pkl'))
 
     parser.add_argument('--data_agumentation', type=utils.str2bool, default=False) # WARNING : Don't use now, UNSTABLE.
     parser.add_argument('--augs', type=utils.str2list, default='crop', help='See others in data_aug.py')

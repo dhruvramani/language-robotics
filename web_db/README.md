@@ -1,9 +1,12 @@
 ## TODO 
-Run :
+
+To run the usual commands on manage.py, run `python3 manage.py` and enter command when prompted. Had to edit it out (see `manage.py`) due to errors with argv and configs.
+
+Commands to run when setting up from scratch.
 ```
-pip install django-polymorphic
-python manage.py migrate
-python manage.py createsuperuser
+makemigrations
+migrate
+createsuperuser
 python manage.py syncdb
 
 ```
