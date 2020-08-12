@@ -34,6 +34,7 @@ def add_vocab(sentence):
     with open(config.vocab_path, 'wb') as pkl_file:
         pickle.dump(vocab, pkl_file)
 
+# TESTED
 def store_trajectoy(trajectory, episode_type=config.episode_type):
     ''' 
         Save trajectory to the corresponding database based on env and env_type specified in config.
@@ -114,6 +115,7 @@ def get_trajectory(episode_type=None, index=None, episode_id=None):
 
     return trajectory
 
+# TESTED
 def get_random_trajectory(episode_type=None):
     '''
         Gets a random trajectory from the corresponding database based on env and env_type specified in config.
@@ -135,7 +137,7 @@ def get_random_trajectory(episode_type=None):
 
     return trajectory, str(metadata.episode_id)
 
-
+# TESTED
 def create_video(trajectory):
     '''
         Creates videos and stores video, the initial and the final frame in the paths specified in data_config. 
@@ -193,6 +195,7 @@ def archive_traj_task(task=config.env_type, episode_type=None, file_name=None):
 
     tar.close()
 
+# TESTED
 def delete_trajectory(episode_id):
     obj = config.traj_db.objects.get(episode_id=episode_id)
     if os.path.exists(obj.data_path):

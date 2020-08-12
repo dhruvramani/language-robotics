@@ -105,6 +105,7 @@ def collect_human_demonstrations(config):
 
         env.close()
 
+# TESTED
 def collect_random_demonstration(config):
     assert config.env == 'SURREAL'
     deg = config.deg()

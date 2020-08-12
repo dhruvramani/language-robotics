@@ -7,7 +7,7 @@ def test_experiment(config):
     deg = config.deg()
     env = deg.get_env()
     vobs_dim, dof_dim = deg.obs_space[deg.vis_obv_key], deg.obs_space[deg.dof_obv_key] 
-    act_dim = deg.action_space # TODO : DEBUG here
+    act_dim = deg.action_space[0]
 
     with torch.no_grad():
         perception_module = PerceptionModule(vobs_dim, dof_dim, config.visual_state_dim).to(device)
@@ -43,7 +43,7 @@ def test_with_lang(config):
     deg = config.deg()
     env = deg.get_env()
     vobs_dim, dof_dim = deg.obs_space[deg.vis_obv_key], deg.obs_space[deg.dof_obv_key] 
-    act_dim = deg.action_space # TODO : DEBUG here
+    act_dim = deg.action_space[0]
 
     with torch.no_grad():
         perception_module = PerceptionModule(vobs_dim, dof_dim, config.visual_state_dim).to(device)

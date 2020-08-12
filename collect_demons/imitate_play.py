@@ -91,7 +91,7 @@ def train_imitation(demons_config):
     deg = demons_config.deg(get_episode_type='EPISODE_ROBOT_PLAY')
 
     vobs_dim, dof_dim = deg.obs_space[deg.vis_obv_key], deg.obs_space[deg.dof_obv_key] 
-    act_dim = deg.action_space # TODO : DEBUG here
+    act_dim = deg.action_space[0]
 
     tensorboard_writer = SummaryWriter(logdir=demons_config.tensorboard_path)
     perception_module = PerceptionModule(vobs_dim, dof_dim, model_config.visual_state_dim).to(device)
@@ -150,7 +150,7 @@ def imitate_play():
     env = deg.get_env()
     
     vobs_dim, dof_dim = deg.obs_space[deg.vis_obv_key], deg.obs_space[deg.dof_obv_key] 
-    act_dim = deg.action_space # TODO : DEBUG here
+    act_dim = deg.action_space[0]
 
     with torch.no_grad():
         perception_module = PerceptionModule(vobs_dim, dof_dim, model_config.visual_state_dim).to(device)

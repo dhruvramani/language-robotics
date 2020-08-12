@@ -9,6 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
 
 from traj_db.models import Trajectory
 
+#TESTED
 class Instruction(PolymorphicModel):
     ''' Table containing instructios for each trajectory collected using Hindsight Instruction.
         NOTE : ABSTRACT CLASS - Create a new subclass/table for each Env.
@@ -36,6 +37,7 @@ class Instruction(PolymorphicModel):
     def __str__(self):
         return "{} : {}".format(self.env_id, self.instruction)
 
+#TESTED
 class SurrealRoboticsSuiteInstruction(Instruction):
     ''' Instruction table for Surreal Robotics Suite environment. '''
     

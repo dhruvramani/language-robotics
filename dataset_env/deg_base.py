@@ -8,6 +8,7 @@ import data_aug as rad
 from data_config import get_dataset_args
 from file_storage import get_trajectory, get_random_trajectory, get_instruct_traj
 
+# TESTED - env, not datasets
 class DataEnvGroup(object):
     ''' + NOTE : Create subclass for every environment, eg.
         Check `assert self.env_name == 'ENV_NAME'`

@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 from deg_base import DataEnvGroup
 
+# TESTED
 class SurrealDataEnvGroup(DataEnvGroup):
     ''' DataEnvGroup for Surreal Robotics Suite environment. 
         

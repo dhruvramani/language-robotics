@@ -33,6 +33,7 @@ def ep_type(string):
                 'exploration': 'EPISODE_ROBOT_EXPLORED', 'random': 'EPISODE_ROBOT_RANDOM'}
     return ep_dict[string.lower()]
 
+# TESTED
 def get_dataset_args():
     parser = get_global_parser()
 

@@ -16,6 +16,7 @@ class TrajectoryTag(models.Model):
     def __str__(self):
         return self.name
 
+#TESTED
 class Trajectory(PolymorphicModel):
     ''' Abstract table desicribing trajectory schema.
         NOTE : ABSTRACT CLASS - Create a new subclass/table for each Env.
@@ -67,6 +68,7 @@ class Trajectory(PolymorphicModel):
     def __str__(self):
         return "{} : {}".format(self.env_id, self.episode_id)
 
+#TESTED
 class SurrealRoboticsSuiteTrajectory(Trajectory):
     ''' Trajectory table for Surreal Robotics Suite environment. '''
     

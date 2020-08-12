@@ -7,6 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
 import utils
 from global_config import *
 
+# TESTED
 def get_demons_args():
     parser = get_global_parser()
     parser.add_argument('--deg', type=env2deg, default='SURREAL')
