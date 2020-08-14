@@ -10,7 +10,6 @@ from file_storage import get_random_trajectory, create_video, add_vocab
 
 config = get_dataset_args()
 
-#TESTED
 def hindsight_instruction(request):
     save_success = False
     if request.method == 'POST':

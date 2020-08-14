@@ -3,7 +3,6 @@ from collections import OrderedDict
 
 from deg_base import DataEnvGroup
 
-# TESTED
 class SurrealDataEnvGroup(DataEnvGroup):
     ''' DataEnvGroup for Surreal Robotics Suite environment. 
         
@@ -41,3 +40,17 @@ class SurrealDataEnvGroup(DataEnvGroup):
         # TODO 
         # Refer https://github.com/StanfordVL/robosuite/blob/master/robosuite/scripts/playback_demonstrations_from_hdf5.py
         raise NotImplementedError
+
+if __name__ == '__main__':
+    from torch.utils.data import DataLoader
+    print("=> Testing surreal_deg.py")
+
+    deg = SurrealDataEnvGroup()
+    print(dec.obs_space[deg.vis_obv_key], deg.action_space)
+    print(deg.get_env().reset())
+
+    traj_data = DataLoader(deg.traj_dataset, batch_size=1, shuffle=True, num_workers=1)
+    print(next(traj_data))
+
+    instruct_data = DataLoader(deg.instruct_dataset, batch_size=1, shuffle=True, num_workers=1)
+    print(next(instruct_data))

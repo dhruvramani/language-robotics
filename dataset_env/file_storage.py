@@ -66,6 +66,7 @@ def store_trajectoy(trajectory, episode_type=config.episode_type):
         with open(metadata.data_path, 'wb') as file:
             np.save(file, trajectory)
 
+# TESTED
 def get_instruct_traj(index=None, instruction_id=None):
     '''
         Gets a particular instruction & corresponding trajectory from the corresponding database based on env and env_type specified in config.
@@ -86,6 +87,7 @@ def get_instruct_traj(index=None, instruction_id=None):
     trajectory = get_trajectory(episode_id=trajectory_obj.episode_id)
     return instruction_obj.instruction, trajectory 
 
+# TESTED
 def get_trajectory(episode_type=None, index=None, episode_id=None):
     '''
         Gets a particular trajectory from the corresponding database based on env and env_type specified in config.

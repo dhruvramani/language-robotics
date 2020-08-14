@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # NOTE : Source - RAD (https://github.com/MishaLaskin/rad)
+# TODO : Will test later
 
 def random_crop(images, out=192):
     '''

@@ -33,7 +33,6 @@ def ep_type(string):
                 'exploration': 'EPISODE_ROBOT_EXPLORED', 'random': 'EPISODE_ROBOT_RANDOM'}
     return ep_dict[string.lower()]
 
-# TESTED
 def get_dataset_args():
     parser = get_global_parser()
 
@@ -63,3 +62,8 @@ def get_dataset_args():
     utils.check_n_create_dir(config.media_dir)
 
     return config
+
+if __name__ == '__main__':
+    print("=> Testing data_config.py")
+    args = get_dataset_args()
+    print(args.traj_db)

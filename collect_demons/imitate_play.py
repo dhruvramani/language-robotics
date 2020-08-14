@@ -7,6 +7,7 @@ import torch
 import torch.nn.Functional as F
 from tqdm import tqdm # TODO : Remove TQDMs
 from tensorboardX import SummaryWriter
+from torch.utils.data import DataLoader
 from torch.distributions.normal import Normal
 
 from demons_config import get_demons_args

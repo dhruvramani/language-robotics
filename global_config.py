@@ -18,7 +18,6 @@ def_env_args = dict(has_renderer=False, has_offscreen_renderer=True, ignore_done
     camera_height=84, camera_width=84, camera_name='agentview', use_object_obs=False, reward_shaping=True)
 def_env_args = json.dumps(def_env_args)
 
-#TESTED
 def get_global_parser():
     ''' Global Config - contains global arguments common to all modules.            
         NOTE: All the paths/dirs have env-env_type-exp_name concated to them at the end. 
@@ -53,3 +52,10 @@ def env2deg(env_name):
     if env_name is None:
         return None
     return env2deg_dict[env_name.upper()]
+
+if __name__ == '__main__':
+    print("=> Testing global_config.py")
+    args = get_global_parser().parse_args()
+    print(args.env)
+    deg = env2deg('SURREAL')
+    print(deg.action_space)

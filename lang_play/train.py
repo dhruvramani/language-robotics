@@ -4,6 +4,7 @@ import numpy as np
 import torch.nn.Functional as F
 from tqdm import tqdm
 from tensorboardX import SummaryWriter
+from torch.utils.data import DataLoader
 
 from models import *
 from language_models import *

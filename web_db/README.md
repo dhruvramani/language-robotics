@@ -10,6 +10,7 @@ createsuperuser
 python manage.py syncdb
 
 ```
+- I think tested, works fine. Just edit the front end ig.
 + Each env has it's own seperate table to store data.
 + 2 Apps :
   - `traj_db` : Contains the main meta-data DB to store the trajectories. Stores the language/instruction schema too.
