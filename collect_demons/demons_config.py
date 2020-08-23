@@ -11,10 +11,10 @@ def get_demons_args():
     parser = get_global_parser()
     parser.add_argument('--deg', type=env2deg, default='SURREAL')
     # TODO : Change later
-    parser.add_argument("--collect_by", type=str, default='play', choices=['play', 'imitation', 'expert', 'policy', 'exploration', 'random'])
+    parser.add_argument("--collect_by", type=str, default='random', choices=['play', 'imitation', 'expert', 'policy', 'exploration', 'random'])
     parser.add_argument("--device", type=str, default="keyboard", choices=["keyboard", "spacemouse"])
     parser.add_argument("--collect_freq", type=int, default=1)
-    parser.add_argument("--flush_freq", type=int, default=5) # NOTE : RAM Issues, change here : 75
+    parser.add_argument("--flush_freq", type=int, default=75) # NOTE : RAM Issues, change here : 75
     parser.add_argument("--break_traj_success", type=utils.str2bool, default=True)
     parser.add_argument("--n_runs", type=int, default=10, 
         help="no. of runs of traj collection, affective when break_traj_success = False")

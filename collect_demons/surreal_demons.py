@@ -27,19 +27,6 @@ def collect_human_demonstrations(config):
         env.viewer.add_keypress_callback("any", device.on_press)
         env.viewer.add_keyup_callback("any", device.on_release)
         env.viewer.add_keyrepeat_callback("any", device.on_press)
-        controls = '''
-                             Controls
-         ---------------------------------------------------
-        |  q         |  reset simulation                    |
-        |  spacebar  |  toggle gripper (open/close)         |
-        |  w-a-s-d   |  move arm horizontally in x-y plane  |
-        |  r-f       |  move arm vertically                 |
-        |  z-x       |  rotate arm about x-axis             |
-        |  t-g       |  rotate arm about y-axis             |
-        |  c-v       |  rotate arm about z-axis             |
-        |  ESC       |  quit                                |
-         ---------------------------------------------------
-        '''
         print(controls)
     elif config.device == "spacemouse":
         from surreal.robosuite.devices import SpaceMouse
@@ -50,7 +37,7 @@ def collect_human_demonstrations(config):
         env.set_robot_joint_positions([0, -1.18, 0.00, 2.18, 0.00, 0.57, 1.5708]) 
         # rotate the gripper so we can see it easily - NOTE : REMOVE MAYBE
         env.viewer.set_camera(camera_id=2)
-        #env.render() #TODO : Uncomment
+        env.render()
 
         device.start_control()
 
