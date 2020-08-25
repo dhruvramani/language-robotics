@@ -1,3 +1,8 @@
+import os
+import sys
+
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), './surreal'))
+
 import surreal.robosuite as suite
 from collections import OrderedDict
 
@@ -46,11 +51,11 @@ if __name__ == '__main__':
     print("=> Testing surreal_deg.py")
 
     deg = SurrealDataEnvGroup()
-    print(dec.obs_space[deg.vis_obv_key], deg.action_space)
-    print(deg.get_env().reset())
+    print(deg.obs_space[deg.vis_obv_key], deg.action_space)
+    print(deg.get_env().reset()[deg.vis_obv_key].shape)
 
     traj_data = DataLoader(deg.traj_dataset, batch_size=1, shuffle=True, num_workers=1)
-    print(next(traj_data))
+    print(next(iter(traj_data)))
 
     instruct_data = DataLoader(deg.instruct_dataset, batch_size=1, shuffle=True, num_workers=1)
-    print(next(instruct_data))
+    print(next(iter(instruct_data)))

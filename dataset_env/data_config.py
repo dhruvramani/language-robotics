@@ -4,7 +4,6 @@ import argparse
 import django
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), './surreal'))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/'))
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "web_db.settings")

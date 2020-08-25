@@ -44,7 +44,7 @@ class DataEnvGroup(object):
             else:
                 return self.config.traj_db.objects.filter(episode_type=self.episode_type).count()
 
-        def __get_item__(self, idx):
+        def __getitem__(self, idx):
             # NOTE : HUGE ASSUMPTION - assuming that the stored shapes are correct.
             # TODO : IMPORTANT - Implement trajectory cropping and all
             trajectory =  get_trajectory(index=idx, episode_type=self.episode_type)
@@ -59,7 +59,7 @@ class DataEnvGroup(object):
         def __len__(self):  
             self.config.instruct_db.objects.count()
 
-        def __get_item__(self, idx):
+        def __getitem__(self, idx):
             # TODO : IMPORTANT - Implement trajectory cropping and all
             instruction, traj = get_instruct_traj(index=idx)
             if self.config.data_agumentation:

@@ -79,7 +79,7 @@ def get_instruct_traj(index=None, instruction_id=None):
     assert index is not None and instruction_id is not None
 
     if index is not None:
-        instruction_obj = config.instruct_db.objects.get(task_id=config.env_type, instruction_count=index)
+        instruction_obj = config.instruct_db.objects.get(task_id=config.env_type, instruction_count=index + 1)
     elif instruction_id is not None:
         instruction_obj = config.instruct_db.objects.get(task_id=config.env_type, instruction_id=uuid.UUID(instruction_id))
 
@@ -103,9 +103,9 @@ def get_trajectory(episode_type=None, index=None, episode_id=None):
     assert episode_id is not None or index is not None
     if index is not None:
         if episode_type is None: # TODO : Clean code
-            metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index)
+            metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index + 1)
         else:
-            metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index, episode_type=episode_type)
+            metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index + 1, episode_type=episode_type)
     elif episode_id is not None:
         metadata = config.traj_db.objects.get(episode_id=uuid.UUID(episode_id))
     
