@@ -34,7 +34,7 @@ class PerceptionModule(torch.nn.Module):
         self.conv2 = torch.nn.Conv2d(32, 64, kernel_size=(4, 4), stride=2)
         self.conv3 = torch.nn.Conv2d(64, 64, kernel_size=(3, 3), stride=1)
         self.ss = SpatialSoftmax(22, 22, 64)
-        self.lin1 = torch.nn.Linear(22 * 22* 64, 512) # TODO Might change IP shape
+        self.lin1 = torch.nn.Linear(22 * 22 * 64, 512) # TODO Might change IP shape
         self.lin2 = torch.nn.Linear(512, state_dim)
         self.relu = torch.nn.ReLU()
 
@@ -67,8 +67,6 @@ class VisualGoalEncoder(torch.nn.Module):
         self.goal_dist = GaussianNetwork(state_dim, goal_dim)
 
     def forward(self, visual_obv, perception_module=None):
-        if visual_obv.size() == 2 # To filter dof-obvs
-            visual_obv = visual_obv[0]
         if(visual_obv.size([-1]) != self.state_dim):
             assert perception_module is not None
             visual_obv = perception_module(visual_obv, None)
@@ -83,7 +81,7 @@ class PlanRecognizerModule(torch.nn.Module):
         NOTE : Pass a *SINGLE* trajectory [[[Ot/st, at], ... K]] only, where Ot = [Vobv, DOF].
         NOTE : Trajectory shape : (1, K, 2) (Batch Size = 1).
     '''
-    def __init__(self, max_sequence_length, state_dim=72, latent_dim=256):
+    def __init__(self, config, max_sequence_length, state_dim=72, latent_dim=256):
         super(PlanRecognizerModule, self).__init__()
         self.max_sequence_length = max_sequence_length
         self.state_dim = state_dim
@@ -91,17 +89,10 @@ class PlanRecognizerModule(torch.nn.Module):
 
         self.seqVae = SeqVAE(max_sequence_length, state_dim, latent_size=latent_dim)
 
-    def forward(self, trajectory, perception_module=None):
-        assert trajectory.size()[0] == 1 and trajectory.size()[1] <= self.max_sequence_length
-        
-        if trajectory[0, 0, 0].size()[-1] != self.state_dim:
-            assert perception_module is not None
-            visual_obvs, dof_obvs = trajectory[0, :, 0]
-            trajectory[0, :, 0] = perception_module(visual_obv, dof_obv)
+    def forward(self, states, actions):
+        traj_tensor = torch.cat((states, action), -1)
 
-        trajectory[0, :] = torch.cat((trajectory[0, :, 0], trajectory[0, :, 1]), -1)
-
-        z, mean, logv = self.seqVae(trajectory)
+        z, mean, logv = self.seqVae(traj_tensor)
         return z, mean, logv
 
 class PlanProposerModule(torch.nn.Module):
@@ -118,10 +109,7 @@ class PlanProposerModule(torch.nn.Module):
         self.cVae = ConditionalVAE(state_dim + goal_dim, latent_dim)
 
     def forward(self, initial_obv, goal_obv, goal_encoder=None, perception_module=None):
-        if initial_obv.size()[-1] != self.state_dim:
-            assert perception_module is not None
-            visual_obv, dof_obv = initial_obv
-            initial_obv = perception_module(visual_obv, dof_obv)
+        assert initial_obv.size()[-1] == self.state_dim
 
         if goal_obv.size()[-1] != self.goal_dim:
             assert goal_encoder is not None

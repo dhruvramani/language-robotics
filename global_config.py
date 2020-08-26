@@ -13,9 +13,10 @@ BASE_DIR = os.path.dirname((os.path.abspath(__file__)))
 DATA_DIR = '/scratch/scratch2/dhruvramani/language-robotics_data'
 TIME_STAMP = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-# TODO : Set has_renderer=True when possible
-def_env_args = dict(has_renderer=False, has_offscreen_renderer=True, ignore_done=True, use_camera_obs=True,  
-    camera_height=84, camera_width=84, camera_name='agentview', use_object_obs=False, reward_shaping=True)
+# NOTE : Set it as true. Run `xvfb-run -a -s "-screen 0 1400x900x24" zsh` & 
+#        `export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so` for rendering.
+def_env_args = dict(has_renderer=True, has_offscreen_renderer=True, ignore_done=True, use_camera_obs=True,  
+    camera_height=256, camera_width=256, camera_name='agentview', use_object_obs=False, reward_shaping=True)
 def_env_args = json.dumps(def_env_args)
 
 def get_global_parser():

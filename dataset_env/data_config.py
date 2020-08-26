@@ -40,7 +40,6 @@ def get_dataset_args():
     parser.add_argument('--traj_db', type=env2TrajDB, default='SURREAL')
     parser.add_argument('--instruct_db', type=env2InstructDB, default='SURREAL')
     parser.add_argument('--archives_path', type=str, default=os.path.join(DATA_DIR, 'data_files/archives'))
-    parser.add_argument('--store_as', type=str, default='NumpyArray', choices=['TorchTensor', 'NumpyArray'])
     parser.add_argument('--episode_type', type=ep_type, default='play', choices=['play', 'imitation', 'expert', 'policy', 'exploration', 'random'])
     parser.add_argument('--media_dir', type=str, default=os.path.join(BASE_DIR, 'web_db/static/media/'))
     parser.add_argument('--vid_path', type=str, default='vid.mp4')

@@ -162,9 +162,10 @@ class SeqVAE(torch.nn.Module):
 
     def forward(self, input_sequence):        
         batch_size = input_sequence.size(0)
-        #sorted_lengths, sorted_idx = torch.sort(self.max_sequence_length, descending=True)
-        #input_sequence = input_sequence[sorted_idx]
-        #input_sequence = torch.nn.rnn_utils.pack_padded_sequence(input_sequence, sorted_lengths.data.tolist(), batch_first=True)
+        # NOTE/TODO : uncommented the below lines - see if they are necessary
+        sorted_lengths, sorted_idx = torch.sort(self.max_sequence_length, descending=True)
+        input_sequence = input_sequence[sorted_idx]
+        input_sequence = torch.nn.rnn_utils.pack_padded_sequence(input_sequence, sorted_lengths.data.tolist(), batch_first=True)
 
         _, hidden = self.encoder_rnn(input_sequence)
         if self.bidirectional or self.num_layers > 1:

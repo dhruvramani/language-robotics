@@ -1,9 +1,8 @@
 # Language-Based Robotics
 
-Make it very accurate on while working with pixels. Just have to change PerceptionModule.
-
 + TODO's 
-    - ensure that env & env_type arguments are enough for everything, don't have to change anything else
+    - Save GPU memory by not creating additional variables
+    - Make it very accurate on while working with pixels. Just have to change PerceptionModule.
     - check for syntax errors
     - Code datatset_env & collect_demons for Furniture env
     - edit fs.py to include code to unarchive when get traj is called

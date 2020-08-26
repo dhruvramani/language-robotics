@@ -3,6 +3,7 @@ import os
 import sys
 import uuid
 import torch
+import pickle
 import tarfile
 import numpy as np
 import torchvision
@@ -39,32 +40,25 @@ def store_trajectoy(trajectory, episode_type=config.episode_type):
     ''' 
         Save trajectory to the corresponding database based on env and env_type specified in config.
         + Arguments:
-            - trajectory: [[Ot/st, at], ... K] where Ot = [Vobv, DOF, ...]
+            - trajectory: {deg.vis_obv_key : np.array([n]), deg.dof_obv_key : np.array([n]), 'action' : np.array([n])}
             - episode_type [optional]: tag to store trajectories with (eg. 'play' or 'imitation')
     '''
     if 'EPISODE_' not in episode_type:
         episode_type = ep_type(episode_type)
 
-    if config.store_as == 'TorchTensor':
-        trajectory = torch.Tensor(trajectory).cpu()
-    elif config.store_as == 'NumpyArray' and type(trajectory) == torch.Tensor:
-        trajectory = trajectory.cpu().numpy()
-
-    assert trajectory.shape[-1] == 2 # Check if (obvs, actions)
+    assert 'action' in trajectory.keys()
 
     # NOTE : Current data_path is a placeholder. Edited below with UUID.
     metadata = config.traj_db(task_id=config.env_type, env_id=config.env, 
-        data_path=config.data_path, episode_type=episode_type, traj_steps=trajectory.shape[0])
+        data_path=config.data_path, episode_type=episode_type, traj_steps=trajectory['action'].shape[0])
 
     metadata.save()
     metadata.data_path = os.path.join(config.data_path, "{}.pt".format(metadata.episode_id))
     metadata.save()
 
-    if config.store_as == 'TorchTensor':
-        torch.save(trajectory, metadata.data_path)
-    elif config.store_as == 'NumpyArray':
-        with open(metadata.data_path, 'wb') as file:
-            np.save(file, trajectory)
+    with open(metadata.data_path, 'wb') as file:
+        pickle.dump(trajectory, file, protocol=pickle.HIGHEST_PROTOCOL)
+
 
 # TESTED
 def get_instruct_traj(index=None, instruction_id=None):
@@ -73,10 +67,10 @@ def get_instruct_traj(index=None, instruction_id=None):
         + Arguments:
             - index [optional]: get instruction object at a particular index
             - instruction_id [optional]: get instruction object by it's instruction_id (primary key)
-        
+          
         + NOTE: either index or episode_id should be not None.
     '''
-    assert index is not None and instruction_id is not None
+    assert index is not None or instruction_id is not None
 
     if index is not None:
         instruction_obj = config.instruct_db.objects.get(task_id=config.env_type, instruction_count=index + 1)
@@ -84,7 +78,7 @@ def get_instruct_traj(index=None, instruction_id=None):
         instruction_obj = config.instruct_db.objects.get(task_id=config.env_type, instruction_id=uuid.UUID(instruction_id))
 
     trajectory_obj = instruction_obj.trajectory
-    trajectory = get_trajectory(episode_id=trajectory_obj.episode_id)
+    trajectory = get_trajectory(episode_id=str(trajectory_obj.episode_id))
     return instruction_obj.instruction, trajectory 
 
 # TESTED
@@ -109,11 +103,8 @@ def get_trajectory(episode_type=None, index=None, episode_id=None):
     elif episode_id is not None:
         metadata = config.traj_db.objects.get(episode_id=uuid.UUID(episode_id))
     
-    trajectory = None
-    if config.store_as == 'TorchTensor':
-        trajectory = torch.load(metadata.data_path)
-    elif config.store_as == 'NumpyArray':
-        trajectory = np.load(metadata.data_path, allow_pickle=True)
+    with open(metadata.data_path, 'rb') as file:
+        trajectory = pickle.load(file)
 
     return trajectory
 
@@ -131,26 +122,20 @@ def get_random_trajectory(episode_type=None):
     else:
         metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index, episode_type=episode_type)
     
-    trajectory = None
-    if config.store_as == 'TorchTensor':
-        trajectory = torch.load(metadata.data_path)
-    elif config.store_as == 'NumpyArray':
-        trajectory = np.load(metadata.data_path, allow_pickle=True)
+    episode_id = str(metadata.episode_id)
+    trajectory = get_trajectory(episode_id=episode_id)
 
-    return trajectory, str(metadata.episode_id)
+    return trajectory, episode_id
 
 # TESTED
 def create_video(trajectory):
     '''
         Creates videos and stores video, the initial and the final frame in the paths specified in data_config. 
         + Arguments:
-            - trajectory : [[Ot, at], ... K] only, where Ot = [Vobv, DOF].
+            - trajectory: {deg.vis_obv_key : np.array([n]), deg.dof_obv_key : np.array([n]), 'action' : np.array([n])}
     '''
-
-    frames = np.zeros((trajectory.shape[0], ) + trajectory[0, 0][0].shape).astype(np.uint8)
-    for i in range(trajectory.shape[0]):
-        frames[i, :] = trajectory[i, 0][0].astype(np.uint8)
-
+    # TODO - change 'image' to config.deg.vis_obv_key
+    frames = trajectory['image'].astype(np.uint8)
     assert frames.shape[-1] == 3
     
     inital_obv, goal_obv = Image.fromarray(frames[0]), Image.fromarray(frames[-1])
@@ -186,15 +171,16 @@ def archive_traj_task(task=config.env_type, episode_type=None, file_name=None):
 
     tar = tarfile.open(file_name, "w:gz")
     for metadata in objects:
-        if metadata.is_archived == False:
-            metadata.is_archived = True
-            metadata.save()
+        if metadata.is_archived == True:
+            continue
+            
+        metadata.is_archived = True
+        metadata.save()
         
-            tar.add(metadata.data_path)
+        tar.add(metadata.data_path)
 
-            archive = ArchiveFile(trajectory=metadata, env_id=metadata.env_id, archive_file=file_name)        
-            archive.save()
-
+        archive = ArchiveFile(trajectory=metadata, env_id=metadata.env_id, archive_file=file_name)        
+        archive.save()
     tar.close()
 
 # TESTED

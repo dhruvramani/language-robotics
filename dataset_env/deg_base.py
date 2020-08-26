@@ -25,12 +25,19 @@ class DataEnvGroup(object):
         self.traj_dataset = self.TrajDataset(self.episode_type, self.config)
         self.instruct_dataset = self.InstructionDataset(self.config)
 
+        # NOTE : Environment dependent properties
+        # Set these after inheriting the class. NotImplementedError
+        self.vis_obv_key = None
+        self.dof_obv_key = None
+        self.obs_space = None
+        self.action_space = None
+
     def get_env(self):
         raise NotImplementedError
 
     def get_random_goal(self):
-        goal_obs = get_random_trajectory()[0][-1, 0]
-        goal = goal_obs[0]
+        assert issubclass(type(self), DataEnvGroup) is True # NOTE : might raise error - remove if so
+        goal = get_random_trajectory()[self.vis_obv_key][-1]
         return goal
 
     class TrajDataset(Dataset):
@@ -45,11 +52,10 @@ class DataEnvGroup(object):
                 return self.config.traj_db.objects.filter(episode_type=self.episode_type).count()
 
         def __getitem__(self, idx):
-            # NOTE : HUGE ASSUMPTION - assuming that the stored shapes are correct.
             # TODO : IMPORTANT - Implement trajectory cropping and all
             trajectory =  get_trajectory(index=idx, episode_type=self.episode_type)
             if self.config.data_agumentation:
-                trajectory[:, 0] = rad.apply_augs(trajectory[:, 0], self.config)
+                trajectory[self.vis_obv_key] = rad.apply_augs(trajectory[self.vis_obv_key], self.config)
             return trajectory
 
     class InstructionDataset(Dataset):
@@ -57,12 +63,14 @@ class DataEnvGroup(object):
             self.config = config
 
         def __len__(self):  
-            self.config.instruct_db.objects.count()
+            return self.config.instruct_db.objects.count()
 
         def __getitem__(self, idx):
             # TODO : IMPORTANT - Implement trajectory cropping and all
-            instruction, traj = get_instruct_traj(index=idx)
+            instruction, trajectory = get_instruct_traj(index=idx)
             if self.config.data_agumentation:
-                traj[:, 0] = rad.apply_augs(traj[:, 0], self.config)
-            return instruction, traj
+                trajectory[self.vis_obv_key] = rad.apply_augs(trajectory[self.vis_obv_key], self.config)
+
+            trajectory.update(instruction=instruction)
+            return trajectory
 

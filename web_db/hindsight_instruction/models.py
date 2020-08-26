@@ -25,8 +25,8 @@ class Instruction(PolymorphicModel):
                 > Chosen this way as a single trajectoy can have multiple instructions.
                 > Also while training, we only need trajectoies containing instructions. Easier this way.
     ''' 
-    instruction_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    instruction_count =  models.IntegerField(default=1)
+    instruction_id = models.UUIDField(default=uuid.uuid4, editable=False)
+    instruction_count =  models.AutoField(primary_key=True, default=1)
     env_id = models.CharField(max_length=50)
     task_id = models.CharField(max_length=50)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -34,30 +34,12 @@ class Instruction(PolymorphicModel):
     trajectory = models.ForeignKey(Trajectory, on_delete=models.CASCADE)
 
     def __str__(self):
-        return "{} : {}".format(self.env_id, self.instruction)
+        return "{} - {} : {}".format(self.env_id, self.task_id, self.instruction)
 
 class SurrealRoboticsSuiteInstruction(Instruction):
     ''' Instruction table for Surreal Robotics Suite environment. '''
-    
-    def save(self, *args, **kwargs):
-        # This means that the model isn't saved to the database yet
-        if self._state.adding:
-            last_count = SurrealRoboticsSuiteInstruction.objects.all().aggregate(largest=models.Max('instruction_count'))['largest']
-            
-            if last_count is not None:
-                self.instruction_count = last_count + 1
-
-        super(SurrealRoboticsSuiteInstruction, self).save(*args, **kwargs)
+    pass
 
 class USCFurnitureInstruction(Instruction):
     '''Instruction table for USC's Furniture environment. '''
-    
-    def save(self, *args, **kwargs):
-        # This means that the model isn't saved to the database yet
-        if self._state.adding:
-            last_count = USCFurnitureInstruction.objects.all().aggregate(largest=models.Max('instruction_count'))['largest']
-            
-            if last_count is not None:
-                self.instruction_count = last_count + 1
-
-        super(USCFurnitureInstruction, self).save(*args, **kwargs)
+    pass

@@ -55,7 +55,7 @@ if __name__ == '__main__':
     print(deg.get_env().reset()[deg.vis_obv_key].shape)
 
     traj_data = DataLoader(deg.traj_dataset, batch_size=1, shuffle=True, num_workers=1)
-    print(next(iter(traj_data)))
+    print(next(iter(traj_data))[deg.vis_obv_key].shape)
 
     instruct_data = DataLoader(deg.instruct_dataset, batch_size=1, shuffle=True, num_workers=1)
-    print(next(iter(instruct_data)))
+    print(next(iter(instruct_data))['instruction'])

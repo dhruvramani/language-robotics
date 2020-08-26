@@ -1,4 +1,5 @@
 # Byte-compiled / optimized / DLL files
+sftp-config.json
 web_db/static/media
 dataset_env/surreal
 dataset_env/furniture

@@ -113,20 +113,19 @@ def train_imitation(demons_config):
         optimizer.load_state_dict(torch.load(os.path.join(demons_config.models_save_path, 'optimizer.pth')))
 
     print("Tensorboard path : {}".format(demons_config.tensorboard_path))
-    # TODO *IMPORTANT* : Change code to make it work with bigger batch-sizes.  
+    # TODO *IMPORTANT* : Change code to make it work with bigger batch-sizes. => rename it to trajectories.  
     data_loader = DataLoader(deg.traj_dataset, batch_size=model_config.batch_size, shuffle=True, num_workers=1)
 
     for epoch in tqdm(range(model_config.max_epochs), desc="Check Tensorboard"):
         for i, trajectory in enumerate(data_loader):
-            trajectory = torch.FloatTensor(trajectory).to(device)
+            visual_obvs, dof_obs, actions = trajectory[deg.vis_obv_key], trajectory[deg.dof_obv_key], trajectory['action']
+            visual_obvs = torch.from_numpy(visual_obvs).float().to(device)
+            dof_obs = torch.from_numpy(dof_obs).float().to(device)
+            actions = torch.from_numpy(actions).float().to(device)
 
-            # Batch size = 1, last-dim = 2 as (state, action)
-            assert trajectory.size()[0] == 1 and trajectory.size()[-1] == 2 
+            states = perception_module(visual_obvs, dof_obs) # DEBUG : Might raise in-place errors
 
-            visual_obvs, dof_obs = trajectory[0, :, 0]
-            trajectory[0, :, 0] = perception_module(visual_obvs, dof_obs) # DEBUG : Might raise in-place errors
-
-            pi, logp_a = play_gen_module(state=trajectory[0, :, 0], action=trajectory[0, :, 1])
+            pi, logp_a = play_gen_module(state=states, action=actions)
 
             optimizer.zero_grad()
             loss = -logp_a
@@ -165,7 +164,7 @@ def imitate_play():
 
         for run in range(demons_config.n_gen_traj):
             obs = env.reset()
-            trajectory = []
+            tr_vobvs, tr_dof, tr_actions = [], [], []
 
             for step in range(demon_config.flush_freq):
                 visual_obv, dof_obv = obvs[deg.vis_obv_key], obvs[deg.dof_obv_key]
@@ -173,18 +172,17 @@ def imitate_play():
 
                 action, _ = play_gen_module.step(state)
                 
-                obv_2_store = np.array([obs[deg.vis_obv_key], obs[deg.dof_obv_key].flatten()])
-                traj = np.array([obv_2_store, action])
-                traj = np.expand_dims(traj, 0)
-                if type(trajectory) == list and len(trajectory) == 0:
-                    trajectory = traj
-                elif int(step % demons_config.collect_freq) == 0:
-                    trajectory = np.concatenate((trajectory, traj), 0)
+                if int(step % demons_config.collect_freq) == 0:
+                    tr_vobvs.append(visual_obv)
+                    tr_dof.append(dof_obv)
+                    tr_actions.append(action)
 
                 obs, _, done, _ = env.step(action)
 
             print('Storing Trajectory')
+            trajectory = {deg.vis_obv_key : np.array(tr_vobvs), deg.dof_obv_key : np.array(tr_dof), 'action' : np.array(tr_actions)}
             store_trajectoy(trajectory, 'imitation')
+            trajectory, tr_vobvs, tr_dof, tr_actions = {}, [], [], []
 
         env.close()
 

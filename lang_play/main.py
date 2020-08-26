@@ -17,10 +17,7 @@ def run():
     torch.manual_seed(config.seed)
 
     if config.is_train:
-        if config.use_lang:
-            train_multi_context_goals(config)
-        else:
-            train_visual_goals(config)
+        train_multi_context_goals(config)
 
     if config.use_lang:
         test_with_lang(config)

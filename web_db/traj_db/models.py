@@ -53,8 +53,8 @@ class Trajectory(PolymorphicModel):
         ('EPISODE_ROBOT_RANDOM', 'For Testing')
     ]
 
-    episode_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    traj_count =  models.IntegerField(default=1)
+    episode_id = models.UUIDField(default=uuid.uuid4, editable=False)
+    traj_count =  models.AutoField(primary_key=True)
     env_id = models.CharField(max_length=50)
     task_id = models.CharField(max_length=50)
     traj_steps = models.IntegerField()
@@ -65,33 +65,15 @@ class Trajectory(PolymorphicModel):
     tag = models.ForeignKey(TrajectoryTag, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
-        return "{} : {}".format(self.env_id, self.episode_id)
+        return "{} - {} : {}".format(self.env_id, self.task_id, self.episode_id)
 
 class SurrealRoboticsSuiteTrajectory(Trajectory):
     ''' Trajectory table for Surreal Robotics Suite environment. '''
-    
-    def save(self, *args, **kwargs):
-        # This means that the model isn't saved to the database yet
-        if self._state.adding:
-            last_count = SurrealRoboticsSuiteTrajectory.objects.all().aggregate(largest=models.Max('traj_count'))['largest']
-            
-            if last_count is not None:
-                self.traj_count = last_count + 1
-
-        super(SurrealRoboticsSuiteTrajectory, self).save(*args, **kwargs)
+    pass
 
 class USCFurnitureTrajectory(Trajectory):
     ''' Trajectory table for USC's Furniture environment. '''
-
-    def save(self, *args, **kwargs):
-        # This means that the model isn't saved to the database yet
-        if self._state.adding:
-            last_count = USCFurnitureTrajectory.objects.all().aggregate(largest=models.Max('traj_count'))['largest']
-            
-            if last_count is not None:
-                self.traj_count = last_count + 1
-
-        super(USCFurnitureTrajectory, self).save(*args, **kwargs)
+    pass
 
 class ArchiveFile(models.Model):
     ''' Table describing where episodes are stored in archives.
