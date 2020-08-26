@@ -33,7 +33,7 @@ class SurrealDataEnvGroup(DataEnvGroup):
 
         self.vis_obv_key = 'image'
         self.dof_obv_key = 'robot-state'
-        self.obs_space = {self.vis_obv_key: (256, 256, 3), self.dof_obv_key: (8)}
+        self.obs_space = {self.vis_obv_key: (256, 256, 3), self.dof_obv_key: (30)}
         self.action_space = (8)
 
     def get_env(self):
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     print(deg.get_env().reset()[deg.vis_obv_key].shape)
 
     traj_data = DataLoader(deg.traj_dataset, batch_size=1, shuffle=True, num_workers=1)
-    print(next(iter(traj_data))[deg.vis_obv_key].shape)
+    print(next(iter(traj_data))[deg.dof_obv_key].shape)
 
     instruct_data = DataLoader(deg.instruct_dataset, batch_size=1, shuffle=True, num_workers=1)
     print(next(iter(instruct_data))['instruction'])

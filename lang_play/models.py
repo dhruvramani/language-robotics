@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-import torch.nn.Functional as F
+import torch.nn.functional as F
 from torch.distributions.normal import Normal
 from layers import SpatialSoftmax, ConditionalVAE, SeqVAE, GaussianNetwork
 
@@ -21,7 +21,7 @@ class PerceptionModule(torch.nn.Module):
         Maps raw observation (image & proprioception) O_t to a low dimension embedding s_t. 
         TODO : Normalize proprioception to have zero mean and unit variance.
     '''
-    def __init__(self, visual_obv_dim=[200, 200, 3], dof_obv_dim=[8], state_dim=64):
+    def __init__(self, visual_obv_dim=[256, 256, 3], dof_obv_dim=[8], state_dim=64):
         super(PerceptionModule, self).__init__()
         
         self.visual_obv_dim = visual_obv_dim
@@ -29,12 +29,12 @@ class PerceptionModule(torch.nn.Module):
         self.state_dim = state_dim
 
         assert visual_obv_dim[0] == visual_obv_dim[1]
-        # TODO : IMPORTANT - Remove padding to ensure proper convs
+        # NOTE/TODO : IMPORTANT - whenever the dim. of the obvs changes, this has to be changed
         self.conv1 = torch.nn.Conv2d(3, 32, kernel_size=(8, 8), stride=4, padding=2)
         self.conv2 = torch.nn.Conv2d(32, 64, kernel_size=(4, 4), stride=2)
         self.conv3 = torch.nn.Conv2d(64, 64, kernel_size=(3, 3), stride=1)
-        self.ss = SpatialSoftmax(22, 22, 64)
-        self.lin1 = torch.nn.Linear(22 * 22 * 64, 512) # TODO Might change IP shape
+        self.ss = SpatialSoftmax(height=29, width=29, channel=64) # TODO : Change dim here
+        self.lin1 = torch.nn.Linear(128, 512) # SS O/Ps shape (N, C * 2)
         self.lin2 = torch.nn.Linear(512, state_dim)
         self.relu = torch.nn.ReLU()
 
@@ -43,14 +43,11 @@ class PerceptionModule(torch.nn.Module):
         output = self.relu(self.conv2(output))
         output = self.conv3(output)
         output = self.ss(output)
-        output = torch.flatten(output)
         output = self.relu(self.lin1(output))
         output = self.lin2(output)
 
-        if dof_obv:
-            dof_obv = torch.flatten(dof_obv)
+        if dof_obv is not None:
             output = torch.cat((output, dof_obv), -1)
-
         return output
 
 class VisualGoalEncoder(torch.nn.Module):
@@ -67,12 +64,12 @@ class VisualGoalEncoder(torch.nn.Module):
         self.goal_dist = GaussianNetwork(state_dim, goal_dim)
 
     def forward(self, visual_obv, perception_module=None):
-        if(visual_obv.size([-1]) != self.state_dim):
+        if(visual_obv.shape[-1] != self.state_dim):
             assert perception_module is not None
             visual_obv = perception_module(visual_obv, None)
-        z, mean, std = self.goal_dist(visual_obv)
+        z, dist, mean, std = self.goal_dist(visual_obv)
         
-        return z, mean, std
+        return z, dist, mean, std
 
 class PlanRecognizerModule(torch.nn.Module):
     ''' 
@@ -81,19 +78,19 @@ class PlanRecognizerModule(torch.nn.Module):
         NOTE : Pass a *SINGLE* trajectory [[[Ot/st, at], ... K]] only, where Ot = [Vobv, DOF].
         NOTE : Trajectory shape : (1, K, 2) (Batch Size = 1).
     '''
-    def __init__(self, config, max_sequence_length, state_dim=72, latent_dim=256):
+    def __init__(self, state_dim=72, act_dim=8, latent_dim=256):
         super(PlanRecognizerModule, self).__init__()
-        self.max_sequence_length = max_sequence_length
         self.state_dim = state_dim
+        self.act_dim = act_dim
         self.latent_dim = latent_dim
 
-        self.seqVae = SeqVAE(max_sequence_length, state_dim, latent_size=latent_dim)
+        self.seqVae = SeqVAE(input_size=state_dim + act_dim, latent_size=latent_dim)
 
     def forward(self, states, actions):
-        traj_tensor = torch.cat((states, action), -1)
+        traj_tensor = torch.cat((states, actions), -1)
 
-        z, mean, logv = self.seqVae(traj_tensor)
-        return z, mean, logv
+        z, dist, mean, logv = self.seqVae(traj_tensor)
+        return z, dist, mean, logv
 
 class PlanProposerModule(torch.nn.Module):
     ''' 
@@ -106,7 +103,7 @@ class PlanProposerModule(torch.nn.Module):
         self.goal_dim = goal_dim
         self.latent_dim = latent_dim
 
-        self.cVae = ConditionalVAE(state_dim + goal_dim, latent_dim)
+        self.cVae = ConditionalVAE(state_dim + goal_dim, latent_size=latent_dim)
 
     def forward(self, initial_obv, goal_obv, goal_encoder=None, perception_module=None):
         assert initial_obv.size()[-1] == self.state_dim
@@ -116,11 +113,12 @@ class PlanProposerModule(torch.nn.Module):
             if(type(goal_encoder) == VisualGoalEncoder):
                 goal_obv = goal_encoder(goal_obv, perception_module)
 
-        z, mean, logv = self.cVae(initial_obv, goal_obv)
-        return z, mean, logv
+        z, dist, mean, logv = self.cVae(initial_obv, goal_obv)
+        return z, dist, mean, logv
 
 class ControlModule(torch.nn.Module):
     ''' 
+        TODO : Major changes here
         RNN based goal (z), z_p conditioned policy : a_t ~ \pi(a_t | s_t, z, z_p).
     '''
     def __init__(self, action_dim=8, state_dim=72, goal_dim=32, latent_dim=256,
@@ -143,17 +141,14 @@ class ControlModule(torch.nn.Module):
         self.rnn2 = self.rnn(self.hidden_size, self.hidden_size)
 
         # NOTE : Original paper used a Mixture of Logistic (MoL) dist. Implement later.
-        self.hidden2mean = torch.Linear(self.hidden_size, self.action_dim)
+        self.hidden2mean = torch.nn.Linear(self.hidden_size, self.action_dim)
         log_std = -0.5 * np.ones(self.action_dim, dtype=np.float32)
         self.log_std = torch.nn.Parameter(torch.as_tensor(log_std))
 
-        # The hidden states of the RNN.
-        self.h1 = torch.randn(self.batch_size, self.hidden_size)
-        self.h2 = torch.randn(self.batch_size, self.hidden_size)
         self.relu = torch.nn.ReLU()
-        self.tanh = torch.nn.Tah()
+        self.tanh = torch.nn.Tanh()
 
-    def _prepare_obs(self, state, goal, zp, goal_encoder, perception_module):
+    def _prepare_obs(self, state, goal, zp, goal_encoder=None, perception_module=None):
         if state.size()[-1] != self.state_dim:
             assert perception_module is not None
             state = perception_module(state)
@@ -163,11 +158,23 @@ class ControlModule(torch.nn.Module):
                 goal = goal_encoder(goal, perception_module)
 
         obs = torch.cat((state, goal, zp), -1)
+
+        # The hidden states of the RNN.
+        self.h1 = torch.randn(obs.shape[0], self.hidden_size)
+        self.h2 = torch.randn(obs.shape[0], self.hidden_size)
+        if self.rnn_type == 'LSTM':
+            self.c1 = torch.randn(obs.shape[0], self.hidden_size)
+            self.c2 = torch.randn(obs.shape[0], self.hidden_size)
+
         return obs
 
     def _distribution(self, obs):
-        self.h1 = self.relu(self.rnn1(obs, self.h1)) 
-        self.h2 = self.relu(self.rnn2(self.h1, self.h2))
+        if self.rnn_type == 'LSTM':
+            self.h1, self.c1 = self.relu(self.rnn1(obs, (self.h1, self.c1))) 
+            self.h2, self.c2 = self.relu(self.rnn2(self.h1, (self.h2, self.c2)))
+        else:
+            self.h1 = self.relu(self.rnn1(obs, self.h1)) 
+            self.h2 = self.relu(self.rnn2(self.h1, self.h2))
 
         mean = self.tanh(self.hidden2mean(self.h2))
         std = torch.exp(self.log_std)

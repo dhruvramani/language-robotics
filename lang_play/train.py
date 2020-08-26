@@ -1,7 +1,7 @@
 import os
 import torch
 import numpy as np
-import torch.nn.Functional as F
+import torch.nn.functional as F
 from tqdm import tqdm # TODO : Remove TQDM
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
@@ -18,11 +18,11 @@ def train_multi_context_goals(config):
     env = deg.get_env()
     
     vobs_dim, dof_dim = deg.obs_space[deg.vis_obv_key], deg.obs_space[deg.dof_obv_key] 
-    act_dim = deg.action_space[0]
+    act_dim = deg.action_space
 
     perception_module = PerceptionModule(vobs_dim, dof_dim, config.visual_state_dim).to(device)
     visual_goal_encoder = VisualGoalEncoder(config.visual_state_dim, config.goal_dim).to(device)
-    plan_recognizer = PlanRecognizerModule(config.max_sequence_length, config.combined_state_dim, config.latent_dim).to(device)
+    plan_recognizer = PlanRecognizerModule(config.combined_state_dim, act_dim, config.latent_dim).to(device)
     plan_proposer = PlanProposerModule(config.combined_state_dim, config.goal_dim, config.latent_dim).to(device)
     control_module = ControlModule(act_dim, config.combined_state_dim, config.goal_dim, config.latent_dim).to(device)
 
@@ -49,7 +49,6 @@ def train_multi_context_goals(config):
         if config.use_lang:
             tensorboard_writer.add_graph(instruction_encoder)
 
-    kl_loss = torch.nn.KLDivLoss()
     optimizer = torch.optim.Adam(params, lr=config.learning_rate)
 
     if(config.resume):
@@ -67,7 +66,8 @@ def train_multi_context_goals(config):
         elif config.use_lang:
             instruction_encoder.load_state_dict(torch.load(os.path.join(config.models_save_path, 'basic_instruct_model.pth')))
 
-    print("Tensorboard path : {}".format(config.tensorboard_path))
+    print("Run : tensorboard --logdir={} --host '0.0.0.0' --port 6006".format(config.tensorboard_path))
+    # NOTE: Assuming all sequences are of same length - [batch_size, seq_len, dims]
     visual_data_loader = DataLoader(deg.traj_dataset, batch_size=config.batch_size, shuffle=True, num_workers=config.num_workers)
     
     if config.use_lang:
@@ -75,54 +75,61 @@ def train_multi_context_goals(config):
 
     def inference(trajectory, goal_state):
         visual_obvs, dof_obs, action = trajectory[deg.vis_obv_key], trajectory[deg.dof_obv_key], trajectory['action']
-        visual_obvs = visual_obvs.reshape(config.batch_size * config.max_sequence_length, vobs_dim[2], vobs_dim[0], vobs_dim[1])
-        dof_obs = dof_obs.reshape(config.batch_size * config.max_sequence_length, dof_dim)
+        seq_len = visual_obvs.shape[1]
+
+        visual_obvs = visual_obvs.reshape(config.batch_size * seq_len, vobs_dim[2], vobs_dim[0], vobs_dim[1])
+        dof_obs = dof_obs.reshape(config.batch_size * seq_len, dof_dim)
 
         states = perception_module(visual_obvs, dof_obs) # DEBUG : Might raise in-place errors
-        states = states.reshape(config.batch_size, config.max_sequence_length, config.combined_state_dim)
+        states = states.reshape(config.batch_size, seq_len, config.combined_state_dim)
         inital_state = states[:, 0]
 
-        prior_z, prior_mean, prior_logv = plan_proposer(inital_state, goal_state)
-        post_z, post_mean, post_logv = plan_recognizer(states, action)
+        prior_z, prior_z_dist, _, _ = plan_proposer(inital_state, goal_state)
+        post_z, post_z_dist, _, _ = plan_recognizer(states, action)
 
         # NOTE : goal_state dims - [batch_size, goal_dim]
         goal_state = goal_state.unsqueeze(1)
-        goal_states = goal_state.repeat(1, config.max_sequence_length, 1)
-        post_zs = post_zs.unsqueeze(1)
-        post_zs = post_z.repeat(1, config.max_sequence_length, 1)
+        goal_states = goal_state.repeat(1, seq_len, 1)
+        post_zs = post_z.unsqueeze(1)
+        post_zs = post_zs.repeat(1, seq_len, 1)
+
+        goal_states = goal_states.reshape(config.batch_size * seq_len, -1)
+        post_zs = post_zs.reshape(config.batch_size * seq_len, -1)
+        states = states.reshape(config.batch_size * seq_len, -1)
+        actions = trajectory['action'].reshape(config.batch_size * seq_len, -1)
+
         pi, logp_a = control_module(state=states, goal=goal_states, 
-                        zp=post_zs, action=trajectory['action'])
+                        zp=post_zs, action=actions)
 
-        loss_pi = -logp_a.mean(dim=-1)
-        loss_zp = kl_loss(post_z, prior_z) 
-        loss = loss_pi + config.beta * loss_zp
-        loss = loss.mean()
-
+        loss_pi = -logp_a.mean()
+        loss_kl = torch.distributions.kl_divergence(post_z_dist, prior_z_dist).mean()
+        loss = loss_pi + config.beta * loss_kl
         return loss
 
     for epoch in tqdm(range(config.max_epochs * config.context_steps_scale), desc="Check Tensorboard"):
         loss_visual, loss_lang = 0.0, 0.0
         optimizer.zero_grad()
-
+        
+        # NOTE : God bless detect_anomaly() 🙏🙏
+        #with torch.autograd.detect_anomaly():
         for i in range(config.max_steps_per_context):
             trajectory = next(iter(visual_data_loader))
-            # NOTE : trajectory - dict, trajectory[key].shape = [batch_size, max_seq_len, entity_dim]
-            trajectory = {key : torch.from_numpy(trajectory[key]).float() for key in trajectory.keys()}
+            trajectory = {key : trajectory[key].float().to(device) for key in trajectory.keys()}
             
             last_obvs = trajectory[deg.vis_obv_key][:, -1].reshape(config.batch_size, vobs_dim[2], vobs_dim[0], vobs_dim[1])
             goal_state = perception_module(last_obvs)
-            goal_state, _, _ = visual_goal_encoder(goal_state)
+            goal_state, _, _, _ = visual_goal_encoder(goal_state)
 
             loss = inference(trajectory, goal_state)
             loss_visual += loss
 
-        if use_lang:
+        if config.use_lang:
             for i in range(config.max_steps_per_context):
                 trajectory = next(iter(instruct_data_loader))
-                trajectory = {key : torch.from_numpy(trajectory[key]).float() for key in trajectory.keys() if key != 'instruction'}
+                trajectory = {key : trajectory[key].float().to(device) for key in trajectory.keys() if key != 'instruction'}
                 instruction = trajectory['instruction']
 
-                goal_state, _, _ = instruction_encoder(instruction)
+                goal_state, _, _, _ = instruction_encoder(instruction)
                 loss = inference(trajectory, goal_state)
                 loss_lang += loss
 
@@ -133,9 +140,9 @@ def train_multi_context_goals(config):
         loss.backward()
         optimizer.step()
 
-        tensorboard_writer.add_scalar('Visual Loss', loss_visual)
-        tensorboard_writer.add_scalar('Langauge Loss', loss_lang)
-        tensorboard_writer.add_scalar('Total Loss', loss)
+        tensorboard_writer.add_scalar('loss/visual', loss_visual, epoch)
+        tensorboard_writer.add_scalar('loss/language', loss_lang, epoch)
+        tensorboard_writer.add_scalar('loss/total', loss, epoch)
 
         if int(i % config.save_interval_epoch) == 0:
             torch.save(perception_module.state_dict(), os.path.join(config.models_save_path, 'perception.pth'))

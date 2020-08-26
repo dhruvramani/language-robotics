@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 import numpy as np
+from torch.distributions.normal import Normal
 
 class GaussianNetwork(torch.nn.Module):
     def __init__(self, in_dim, latent_dim):
@@ -27,12 +28,13 @@ class GaussianNetwork(torch.nn.Module):
         z = torch.randn([self.latent_dim]) # TODO: shape might be [[self.latent_dim]]
         z = z * std + mean
 
-        return z, mean, std
+        return z, Normal(mean, std), mean, std
 
 class SpatialSoftmax(torch.nn.Module):
     ''' 
         Spatial softmax is used to find the expected pixel location of feature maps.
         Source : https://gist.github.com/jeasinema/1cba9b40451236ba2cfb507687e08834 
+        Output : Tensor of shape (N, C * 2) - don't use flatten!
     '''
     def __init__(self, height, width, channel, temperature=None, data_format='NCHW'):
         super(SpatialSoftmax, self).__init__()
@@ -74,23 +76,24 @@ class ConditionalVAE(torch.nn.Module):
     '''
     def __init__(self, input_size, latent_size=256, layer_sizes=[2048] * 4, decoder=False):
         super(ConditionalVAE, self).__init__()
-        self.input_size = self.input_size
-        self.latent_size = self.latent_size
-        self.layer_sizes = self.layer_sizes
+        self.input_size = input_size
+        self.latent_size = latent_size
+        self.layer_sizes = layer_sizes
 
         assert type(self.layer_sizes) == list
 
         self.decoder = decoder
 
-        self.encoder_network = torch.nn.Sequential()
-        self.encoder_network.add_module(torch.nn.Linear(self.input_size, self.layer_sizes[0]))
-        self.encoder_network.add_module(torch.nn.ReLU())
+        self.encoder_network = []
+        self.encoder_network.append(torch.nn.Linear(self.input_size, self.layer_sizes[0]))
+        self.encoder_network.append(torch.nn.ReLU())
 
-        for i in range(self.layer_sizes[:-1]):
-            in_size, out_size = i, i + 1
-            self.encoder_network.add_module(torch.nn.Linear(in_size, out_size))
-            self.encoder_network.add_module(torch.nn.ReLU())
+        for i in range(len(self.layer_sizes[:-1])):
+            in_size, out_size = self.layer_sizes[i], self.layer_sizes[i + 1]
+            self.encoder_network.append(torch.nn.Linear(in_size, out_size))
+            self.encoder_network.append(torch.nn.ReLU())
 
+        self.encoder_network = torch.nn.Sequential(*self.encoder_network)
         self.hidden2mean = torch.nn.Linear(self.layer_sizes[-1], self.latent_size)
         self.hidden2logv = torch.nn.Linear(self.layer_sizes[-1], self.latent_size) # TODO : Maybe keep logstd fixed
         self.softplus = torch.nn.Softplus() 
@@ -98,15 +101,16 @@ class ConditionalVAE(torch.nn.Module):
         if self.decoder:
             self.dlayers_size = self.layer_sizes.reverse()
             self.decoder_network = torch.nn.Sequential()
-            self.decoder_network.add_module(torch.nn.Linear(self.latent_size, self.dlayers_size[0]))
-            self.decoder_network.add_module(torch.nn.ReLU())
+            self.decoder_network.append(torch.nn.Linear(self.latent_size, self.dlayers_size[0]))
+            self.decoder_network.append(torch.nn.ReLU())
 
-            for i in range(self.dlayers_size[:-1]):
-                in_size, out_size = i, i + 1
-                self.decoder_network.add_module(torch.nn.Linear(in_size, out_size))
-                self.decoder_network.add_module(torch.nn.ReLU())
+            for i in range(len(self.dlayers_size[:-1])):
+                in_size, out_size = self.dlayers_size[i], self.dlayers_size[i + 1]
+                self.decoder_network.append(torch.nn.Linear(in_size, out_size))
+                self.decoder_network.append(torch.nn.ReLU())
 
-            self.decoder_network.add_module(torch.nn.Linear(self.dlayers_size[-1], self.input_size))            
+            self.decoder_network.append(torch.nn.Linear(self.dlayers_size[-1], self.input_size))
+            self.decoder_network = torch.nn.Sequential(*self.decoder_network)            
 
     def forward(self, x, c):
         batch_size = x.size(0)
@@ -121,23 +125,23 @@ class ConditionalVAE(torch.nn.Module):
         
         z = torch.randn([batch_size, self.latent_size])
         z = z * std + mean
+        dist = Normal(mean, std)
 
         if self.decoder:
             recon_x = self.decoder_network(z)
-            return recon_x, z, mean, logv
+            return recon_x, z, dist, mean, logv
 
-        return z, mean, logv
+        return z, dist, mean, logv
 
 class SeqVAE(torch.nn.Module):
     '''
         Input sequence shape : (batch, seq, feature)
     '''
-    def __init__(self, max_sequence_length, input_size, latent_size=256, hidden_size=2048, rnn_type='RNN', decoder=False, num_layers=2, bidirectional=True):
-        super(ConditionalSeqVAE, self).__init__()
+    def __init__(self, input_size, latent_size=256, hidden_size=2048, rnn_type='RNN', decoder=False, num_layers=2, bidirectional=True):
+        super(SeqVAE, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.latent_size = latent_size
-        self.max_sequence_length = max_sequence_length
         
         self.num_layers = num_layers
         self.rnn_type = rnn_type.upper()
@@ -161,12 +165,11 @@ class SeqVAE(torch.nn.Module):
             self.latent2hidden = torch.nn.Linear(self.latent_size, self.hidden_size * self.hidden_factor)
 
     def forward(self, input_sequence):        
-        batch_size = input_sequence.size(0)
-        # NOTE/TODO : uncommented the below lines - see if they are necessary
-        sorted_lengths, sorted_idx = torch.sort(self.max_sequence_length, descending=True)
-        input_sequence = input_sequence[sorted_idx]
-        input_sequence = torch.nn.rnn_utils.pack_padded_sequence(input_sequence, sorted_lengths.data.tolist(), batch_first=True)
-
+        batch_size, seq_len = input_sequence.shape[0], input_sequence.shape[1]
+        # NOTE : Assuming that all sequences are of the same length
+        #sorted_lengths, sorted_idx = torch.sort(seq_len, descending=True)
+        #input_sequence = input_sequence[sorted_idx]
+        #input_sequence = torch.nn.rnn_utils.pack_padded_sequence(input_sequence, sorted_lengths.data.tolist(), batch_first=True)
         _, hidden = self.encoder_rnn(input_sequence)
         if self.bidirectional or self.num_layers > 1:
             hidden = hidden.view(batch_size, self.hidden_size * self.hidden_factor)
@@ -177,8 +180,9 @@ class SeqVAE(torch.nn.Module):
         logv = self.hidden2logv(hidden)
         std = torch.exp(0.5 * logv)
 
-        z = torch.randn([batch_size, self.latent_size]))
+        z = torch.randn([batch_size, self.latent_size])
         z = z * std + mean
+        dist = Normal(mean, std)
 
         if self.decoder :
             hidden = self.latent2hidden(z)
@@ -189,6 +193,14 @@ class SeqVAE(torch.nn.Module):
                 hidden = hidden.unsqueeze(0)
 
             outputs, _ = self.decoder_rnn(packed_input, hidden)
-            return outputs, z, mean, logv
+            return outputs, z, dist, mean, logv
 
-        return z, mean, logv
+        return z, dist, mean, logv
+
+if __name__ == '__main__':
+  data = torch.zeros([10,3,3,3])
+  data[0,0,0,1] = 10
+  data[0,1,1,1] = 10
+  data[0,2,1,2] = 10
+  layer = SpatialSoftmax(3, 3, 3, temperature=1)
+  print(data.shape, layer(data).shape)

@@ -1,11 +1,10 @@
 import os
 import numpy as np
 import torch
-import torch.nn.Functional as F
+import torch.nn.functional as F
 
-import utils
 from model_config import get_model_args
-from train import train_visual_goals, train_multi_context_goals
+from train import train_multi_context_goals
 from test import test_experiment, test_with_lang
 
 device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')

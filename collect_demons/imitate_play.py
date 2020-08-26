@@ -4,7 +4,7 @@
 import os
 import sys
 import torch
-import torch.nn.Functional as F
+import torch.nn.functional as F
 from tqdm import tqdm # TODO : Remove TQDMs
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
@@ -39,7 +39,7 @@ class PlayGenerationModule(torch.nn.Module):
         self.rnn2 = self.rnn(self.hidden_size, self.hidden_size)
 
         # NOTE : Original paper used a Mixture of Logistic (MoL) dist. Implement later.
-        self.hidden2mean = torch.Linear(self.hidden_size, self.action_dim)
+        self.hidden2mean = torch.nn.Linear(self.hidden_size, self.action_dim)
         log_std = -0.5 * np.ones(self.action_dim, dtype=np.np.float32)
         self.log_std = torch.nn.Parameter(torch.as_tensor(log_std))
 
@@ -47,7 +47,7 @@ class PlayGenerationModule(torch.nn.Module):
         self.h1 = torch.randn(self.batch_size, self.hidden_size)
         self.h2 = torch.randn(self.batch_size, self.hidden_size)
         self.relu = torch.nn.ReLU()
-        self.tanh = torch.nn.Tah()
+        self.tanh = torch.nn.Tanh()
 
     def _prepare_obs(self, state, perception_module):
         if state.size()[-1] != self.state_dim:
@@ -119,9 +119,9 @@ def train_imitation(demons_config):
     for epoch in tqdm(range(model_config.max_epochs), desc="Check Tensorboard"):
         for i, trajectory in enumerate(data_loader):
             visual_obvs, dof_obs, actions = trajectory[deg.vis_obv_key], trajectory[deg.dof_obv_key], trajectory['action']
-            visual_obvs = torch.from_numpy(visual_obvs).float().to(device)
-            dof_obs = torch.from_numpy(dof_obs).float().to(device)
-            actions = torch.from_numpy(actions).float().to(device)
+            visual_obvs = visual_obvs.float().to(device)
+            dof_obs = dof_obs.float().to(device)
+            actions = actions.float().to(device)
 
             states = perception_module(visual_obvs, dof_obs) # DEBUG : Might raise in-place errors
 
@@ -150,7 +150,7 @@ def imitate_play():
     env = deg.get_env()
     
     vobs_dim, dof_dim = deg.obs_space[deg.vis_obv_key], deg.obs_space[deg.dof_obv_key] 
-    act_dim = deg.action_space[0]
+    act_dim = deg.action_space
 
     with torch.no_grad():
         perception_module = PerceptionModule(vobs_dim, dof_dim, model_config.visual_state_dim).to(device)

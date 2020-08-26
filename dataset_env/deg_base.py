@@ -37,7 +37,7 @@ class DataEnvGroup(object):
 
     def get_random_goal(self):
         assert issubclass(type(self), DataEnvGroup) is True # NOTE : might raise error - remove if so
-        goal = get_random_trajectory()[self.vis_obv_key][-1]
+        goal = get_random_trajectory()[0][self.vis_obv_key][-1]
         return goal
 
     class TrajDataset(Dataset):
@@ -52,7 +52,7 @@ class DataEnvGroup(object):
                 return self.config.traj_db.objects.filter(episode_type=self.episode_type).count()
 
         def __getitem__(self, idx):
-            # TODO : IMPORTANT - Implement trajectory cropping and all
+            # TODO : *IMPORTANT* - Implement trajectory cropping and all
             trajectory =  get_trajectory(index=idx, episode_type=self.episode_type)
             if self.config.data_agumentation:
                 trajectory[self.vis_obv_key] = rad.apply_augs(trajectory[self.vis_obv_key], self.config)
@@ -66,7 +66,7 @@ class DataEnvGroup(object):
             return self.config.instruct_db.objects.count()
 
         def __getitem__(self, idx):
-            # TODO : IMPORTANT - Implement trajectory cropping and all
+            # TODO : *IMPORTANT* - Implement trajectory cropping and all
             instruction, trajectory = get_instruct_traj(index=idx)
             if self.config.data_agumentation:
                 trajectory[self.vis_obv_key] = rad.apply_augs(trajectory[self.vis_obv_key], self.config)

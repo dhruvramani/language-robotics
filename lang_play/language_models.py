@@ -3,7 +3,7 @@ import os
 import sys
 import numpy as np
 import torch
-import torch.nn.Functional as F
+import torch.nn.functional as F
 import torchtext
 from torchtext.data import get_tokenizer
 
@@ -15,7 +15,7 @@ import tensorflow_hub as hub
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
 
-from model.layers import GaussianNetwork
+from layers import GaussianNetwork
 from dataset_env import file_storage
 
 device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
@@ -70,8 +70,8 @@ class LanguageModelInstructionEncoder(torch.nn.Module):
 
     def forward(self, text):
         embedding = self.lang_callback(text)
-        z, mean, std = self.goal_dist(embedding)
-        return z, mean, std
+        z, dist, mean, std = self.goal_dist(embedding)
+        return z, dist, mean, std
         
 
 class BasicInstructionEncoder(torch.nn.Module):

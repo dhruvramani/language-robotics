@@ -1,13 +1,16 @@
 import numpy
 import torch
 
+from models import *
+from language_models import *
+
 device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
 
 def test_experiment(config):
     deg = config.deg()
     env = deg.get_env()
     vobs_dim, dof_dim = deg.obs_space[deg.vis_obv_key], deg.obs_space[deg.dof_obv_key] 
-    act_dim = deg.action_space[0]
+    act_dim = deg.action_space
 
     with torch.no_grad():
         perception_module = PerceptionModule(vobs_dim, dof_dim, config.visual_state_dim).to(device)
@@ -23,19 +26,22 @@ def test_experiment(config):
         obvs = env.reset()
         for i in range(config.n_test_evals):
             obvs = env.reset()
-            goal = deg.get_random_goal()
-            goal = perception_module(goal_obv)
-            goal, _. _ = visual_goal_encoder(goal) 
+            goal = torch.from_numpy(deg.get_random_goal()).float()
+            goal = goal.reshape(1, goal.shape[2], goal.shape[0], goal.shape[1])
+            goal = perception_module(goal)
+            goal, _, _, _ = visual_goal_encoder(goal) 
             t, done = 0, False
 
             while (not done) and t <= config.max_test_timestep: 
                 # TODO : Figure out way to set done tru when goal is reached
-                visual_obv, dof_obv = obvs[deg.vis_obv_key], obvs[deg.dof_obv_key]
+                visual_obv, dof_obv = torch.from_numpy(obvs[deg.vis_obv_key]).float(), torch.from_numpy(obvs[deg.dof_obv_key]).float()
+                visual_obv = visual_obv.reshape(1, visual_obv.shape[2], visual_obv.shape[0], visual_obv.shape[1])
+                dof_obv = dof_obv.reshape(1, dof_obv.shape[0])
                 state = perception_module(visual_obv, dof_obv)
-                z_p, _, _ = plan_proposer(state, goal)
+                z_p, _, _, _ = plan_proposer(state, goal)
                 
                 action, _ = control_module.step(state, goal, z_p)
-                obvs, _, done, _ = env.step(action)
+                obvs, _, done, _ = env.step(action[0])
                 env.render()
                 t += 1
 
@@ -43,7 +49,7 @@ def test_with_lang(config):
     deg = config.deg()
     env = deg.get_env()
     vobs_dim, dof_dim = deg.obs_space[deg.vis_obv_key], deg.obs_space[deg.dof_obv_key] 
-    act_dim = deg.action_space[0]
+    act_dim = deg.action_space
 
     with torch.no_grad():
         perception_module = PerceptionModule(vobs_dim, dof_dim, config.visual_state_dim).to(device)
@@ -71,11 +77,13 @@ def test_with_lang(config):
 
             while (not done) and t <= config.max_test_timestep: 
                 # TODO : Figure out way to set done true when goal is reached
-                visual_obv, dof_obv = obvs[deg.vis_obv_key], obvs[deg.dof_obv_key]
+                visual_obv, dof_obv = torch.from_numpy(obvs[deg.vis_obv_key]).float(), torch.from_numpy(obvs[deg.dof_obv_key]).float()
+                visual_obv = visual_obv.reshape(1, visual_obv.shape[2], visual_obv.shape[0], visual_obv.shape[1])
+                dof_obv = dof_obv.reshape(1, dof_obv.shape[0])
                 state = perception_module(visual_obv, dof_obv)
-                z_p, _, _ = plan_proposer(state, goal)
+                z_p, _, _, _ = plan_proposer(state, goal)
                 
                 action, _ = control_module.step(state, goal, z_p)
-                obvs, _, done, _ = env.step(action)
+                obvs, _, done, _ = env.step(action[0])
                 env.render()
                 t += 1

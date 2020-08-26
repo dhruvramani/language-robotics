@@ -15,6 +15,7 @@ TIME_STAMP = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
 # NOTE : Set it as true. Run `xvfb-run -a -s "-screen 0 1400x900x24" zsh` & 
 #        `export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so` for rendering.
+# WARNING : Changing camera_height, camera_width changes the camer_obs dim
 def_env_args = dict(has_renderer=True, has_offscreen_renderer=True, ignore_done=True, use_camera_obs=True,  
     camera_height=256, camera_width=256, camera_name='agentview', use_object_obs=False, reward_shaping=True)
 def_env_args = json.dumps(def_env_args)
