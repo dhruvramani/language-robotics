@@ -52,7 +52,6 @@ class DataEnvGroup(object):
                 return self.config.traj_db.objects.filter(episode_type=self.episode_type).count()
 
         def __getitem__(self, idx):
-            # TODO : *IMPORTANT* - Implement trajectory cropping and all
             trajectory =  get_trajectory(index=idx, episode_type=self.episode_type)
             if self.config.data_agumentation:
                 trajectory[self.vis_obv_key] = rad.apply_augs(trajectory[self.vis_obv_key], self.config)
@@ -66,7 +65,6 @@ class DataEnvGroup(object):
             return self.config.instruct_db.objects.count()
 
         def __getitem__(self, idx):
-            # TODO : *IMPORTANT* - Implement trajectory cropping and all
             instruction, trajectory = get_instruct_traj(index=idx)
             if self.config.data_agumentation:
                 trajectory[self.vis_obv_key] = rad.apply_augs(trajectory[self.vis_obv_key], self.config)

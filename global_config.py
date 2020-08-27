@@ -34,12 +34,12 @@ def get_global_parser():
     parser.add_argument('--env_type', type=str, default='SawyerPickPlace')
     parser.add_argument('--env_args', type=json.loads, default=def_env_args)
     parser.add_argument('--exp_name', type=str, default='v0.5')
-    parser.add_argument('--use_lang', type=utils.str2bool, default=False)
     parser.add_argument('--use_visual_models', type=utils.str2bool, default=True, 
         help='Load pretrained visual models for lang exps. See model_config.')
     parser.add_argument('--num_obv_types', type=int, default=2)
     parser.add_argument('--max_sequence_length', type=int, default=32)
     parser.add_argument('--data_path', type=str, default=os.path.join(DATA_DIR, 'data_files/saved_data/'))
+    parser.add_argument('--display_warnings', type=utils.str2bool, default=False)
 
     return parser
 

@@ -14,7 +14,7 @@ def get_model_args():
     # NOTE: Changed below. v
     parser.add_argument('--deg', type=env2deg, default='SURREAL')
     parser.add_argument('--seed', '-s', type=int, default=0)
-    parser.add_argument('--is_train', type=utils.str2bool, default=False)
+    parser.add_argument('--is_train', type=utils.str2bool, default=True)
     parser.add_argument('--resume', type=utils.str2bool, default=False)
     parser.add_argument('--num_workers', type=int, default=1)
     parser.add_argument('--tensorboard_path', type=str, default=os.path.join(DATA_DIR, 'runs/tensorboard/'))
@@ -22,7 +22,7 @@ def get_model_args():
     parser.add_argument('--save_graphs', type=utils.str2bool, default=False)
     parser.add_argument('--save_interval_steps', type=int, default=100)
     parser.add_argument('--save_interval_epoch', type=int, default=10)
-    parser.add_argument('--max_epochs', type=int, default=50)
+    parser.add_argument('--max_epochs', type=int, default=4) #50
     parser.add_argument('--max_steps_per_context', type=int, default=1) #100
     parser.add_argument('--context_steps_scale', type=int, default=1) #400
     parser.add_argument('--batch_size', type=int, default=2)
@@ -36,9 +36,9 @@ def get_model_args():
     parser.add_argument('--goal_dim', type=int, default=32)
     parser.add_argument('--latent_dim', type=int, default=256)
 
-    # Edit use_lang in global_config
-    parser.add_argument('--use_lang_model', type=utils.str2bool, default=True)
-    parser.add_argument('--lang_model', type=str, default='muse')
+    parser.add_argument('--use_lang', type=utils.str2bool, default=True)
+    parser.add_argument('--use_pretrained_lang_model', type=utils.str2bool, default=True)
+    parser.add_argument('--lang_model', type=str, default='bert')
     
     config = parser.parse_args()
     config.deg = env2deg(config.env)
@@ -50,8 +50,13 @@ def get_model_args():
         config.tensorboard_path = os.path.join(config.tensorboard_path, '{}_{}_{}/'.format(config.env, config.env_type, config.exp_name)) 
     config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
 
-    utils.check_n_create_dir(config.models_save_path)
-    utils.check_n_create_dir(config.tensorboard_path)
-    utils.check_n_create_dir(config.data_path)
+    if config.is_train and not config.resume:
+        utils.recreate_dir(config.models_save_path, config.display_warnings)
+        utils.recreate_dir(config.tensorboard_path, config.display_warnings)
+    else:
+        utils.check_n_create_dir(config.models_save_path, config.display_warnings)
+        utils.check_n_create_dir(config.tensorboard_path, config.display_warnings)
+
+    utils.check_n_create_dir(config.data_path, config.display_warnings)
 
     return config

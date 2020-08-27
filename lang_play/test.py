@@ -55,15 +55,17 @@ def test_with_lang(config):
         perception_module = PerceptionModule(vobs_dim, dof_dim, config.visual_state_dim).to(device)
         plan_proposer = PlanProposerModule(config.combined_state_dim, config.goal_dim, config.latent_dim).to(device)
         control_module = ControlModule(act_dim, config.combined_state_dim, config.goal_dim, config.latent_dim).to(device)
-        if config.use_lang_model:
-            instruction_encoder = LanguageModelInstructionEncoder(config.lang_model, config.latent_dim).to(device)
+        
+        if config.use_pretrained_lang_model:
+            instruction_encoder = LanguageModelInstructionEncoder(config.lang_model, config.goal_dim).to(device)
         else:
-            instruction_encoder = BasicInstructionEncoder(config.latent_dim).to(device)
+            instruction_encoder = BasicInstructionEncoder(config.goal_dim).to(device)
 
         perception_module.load_state_dict(torch.load(os.path.join(config.models_save_path, 'perception.pth')))
         plan_proposer.load_state_dict(torch.load(os.path.join(config.models_save_path, 'plan_proposer.pth')))
         control_module.load_state_dict(torch.load(os.path.join(config.models_save_path, 'control_module.pth')))
-        if config.use_lang_model:
+
+        if config.use_pretrained_lang_model:
             instruction_encoder.goal_dist.load_state_dict(torch.load(os.path.join(config.models_save_path, 'lang_model_{}.pth'.format(config.lang_model))))
         else:
             instruction_encoder.load_state_dict(torch.load(os.path.join(config.models_save_path, 'basic_instruct_model.pth')))
@@ -72,7 +74,7 @@ def test_with_lang(config):
         for i in range(config.n_test_evals):
             obvs = env.reset()
             instruction = input("Type instruction: ")
-            goal = instruction_encoder(instruction)
+            goal, _, _, _ = instruction_encoder(instruction)
             t, done = 0, False
 
             while (not done) and t <= config.max_test_timestep: 

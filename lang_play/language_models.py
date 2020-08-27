@@ -52,21 +52,21 @@ class LanguageModelInstructionEncoder(torch.nn.Module):
         self.goal_dist = GaussianNetwork(self.lang_model_config[-1], self.latent_dim)
 
     def callback_muse(self, text):
-        assert self.lang_model_key is "muse"
+        assert self.lang_model_key == "muse"
         with torch.no_grad():
-            embedding = torch.FloatTensor(tf.make_ndarray(self.lang_model(text)))
-        return embedding.to(device)
+            embedding = torch.from_numpy(self.lang_model(text).numpy())
+        return embedding.float().to(device)
 
     def callback_huggingface(self, text):
-        assert self.lang_model_key is not "muse"
-        input_ids = torch.Tensor([self.tokenizer(text)])
+        assert self.lang_model_key != "muse"
+        input_ids = torch.tensor([self.tokenizer.encode(text, add_special_tokens=True)])
         with torch.no_grad():
             # Source : https://github.com/huggingface/transformers/issues/1950#issuecomment-558770861
             # So instead of having to average of all tokens and use that as a sentence representation,
             # it is recommended to just take the output of the [CLS] which then represents the whole sentence.
             out = self.lang_model(input_ids)
             cls_embedding = out[0][0]
-        return cls_embedding
+        return cls_embedding[0].reshape(1, -1) # NOTE: [0].reshape(1, -1) might be incorrect - see docs.
 
     def forward(self, text):
         embedding = self.lang_callback(text)
