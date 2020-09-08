@@ -11,7 +11,7 @@ def get_model_args():
     # TODO : Change w/ Hyperparams search later.
     parser = get_global_parser()
 
-    # NOTE: Changed below. v
+    # NOTE: 'SURREAL' is a placeholder. The deg is set according to global_config.env -> see below. v
     parser.add_argument('--deg', type=env2deg, default='SURREAL')
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--is_train', type=utils.str2bool, default=True)

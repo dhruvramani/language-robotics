@@ -9,6 +9,8 @@ from global_config import *
 
 def get_demons_args():
     parser = get_global_parser()
+
+    # NOTE: 'SURREAL' is a placeholder. The deg is set according to global_config.env -> see below. v
     parser.add_argument('--deg', type=env2deg, default='SURREAL')
     # TODO : Change later
     parser.add_argument("--collect_by", type=str, default='random', choices=['play', 'imitation', 'expert', 'policy', 'exploration', 'random'])

@@ -1,11 +1,13 @@
-# Surreal Robotics Suite
-git clone https://github.com/StanfordVL/robosuite.git
-cd robosuite
-pip3 install -r requirements-extra.txt
-cd ../
-mv ./robosuite ./surreal
+# All envs in `/scratch/scratch2/dhruvramani/envs`
+# # ---- Surreal Robotics Suite ----
+# git clone https://github.com/StanfordVL/robosuite.git
+# cd robosuite
+# pip3 install -r requirements-extra.txt
+# cd ../
+# mv ./robosuite ./surreal
+# # --------------------------------
 
-# # USC's Furniture Dataset
+# # ---- USC's Furniture Dataset ----
 # git clone https://github.com/clvrai/furniture
 # cd furniture
 # sudo apt-get install libgl1-mesa-dev libgl1-mesa-glx libosmesa6-dev patchelf libopenmpi-dev libglew-dev
@@ -21,3 +23,4 @@ mv ./robosuite ./surreal
 # # sudo nvidia-xconfig -a --use-display-device=None --virtual=1280x1024
 # # sudo /usr/bin/X :1 &
 # # python -m demo_manual --virtual_display :1
+# # ----------------------------------

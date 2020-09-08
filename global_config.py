@@ -6,16 +6,13 @@ import argparse
 
 import utils
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_env/'))
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_env/surreal'))
-
 BASE_DIR = os.path.dirname((os.path.abspath(__file__)))
 DATA_DIR = '/scratch/scratch2/dhruvramani/language-robotics_data'
 TIME_STAMP = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
 # NOTE : Set it as true. Run `xvfb-run -a -s "-screen 0 1400x900x24" zsh` & 
 #        `export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so` for rendering.
-# WARNING : Changing camera_height, camera_width changes the camer_obs dim
+# WARNING : Changing camera_height, camera_width changes the camer_obs dim.
 def_env_args = dict(has_renderer=True, has_offscreen_renderer=True, ignore_done=True, use_camera_obs=True,  
     camera_height=256, camera_width=256, camera_name='agentview', use_object_obs=False, reward_shaping=True)
 def_env_args = json.dumps(def_env_args)
@@ -36,7 +33,6 @@ def get_global_parser():
     parser.add_argument('--exp_name', type=str, default='v0.5')
     parser.add_argument('--use_visual_models', type=utils.str2bool, default=True, 
         help='Load pretrained visual models for lang exps. See model_config.')
-    parser.add_argument('--num_obv_types', type=int, default=2)
     parser.add_argument('--max_sequence_length', type=int, default=32)
     parser.add_argument('--data_path', type=str, default=os.path.join(DATA_DIR, 'data_files/saved_data/'))
     parser.add_argument('--display_warnings', type=utils.str2bool, default=False)
@@ -44,10 +40,11 @@ def get_global_parser():
     return parser
 
 def env2deg(env_name):
+    sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_env/'))
     from dataset_env.surreal_deg import SurrealDataEnvGroup
     from dataset_env.furniture_deg import FurnitureDataEnvGroup
 
-    # NOTE : *IMPORTANT* - Use these in model_config & demons_config ONLY.
+    # NOTE: *IMPORTANT* - Use these in model_config & demons_config ONLY.
     # *DEADLOCK* : can lead to deadlock if an object is created in global_config.
     env2deg_dict = {'SURREAL' : SurrealDataEnvGroup, 'FURNITURE' : FurnitureDataEnvGroup}
 

@@ -1,9 +1,13 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), './surreal'))
+ENV_PATH = '/scratch/scratch2/dhruvramani/envs/robosuite'
+def add_env():
+    sys.path.append(ENV_PATH)
 
-import surreal.robosuite as suite
+add_env()
+
+import robosuite as suite
 from collections import OrderedDict
 
 from deg_base import DataEnvGroup
