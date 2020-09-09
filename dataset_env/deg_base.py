@@ -35,6 +35,12 @@ class DataEnvGroup(object):
     def get_env(self):
         raise NotImplementedError
 
+    def teleoperate(self, demon_config):
+        raise NotImplementedError
+
+    def random_trajectory(self, demons_config):
+        raise NotImplementedError
+
     def get_random_goal(self):
         assert issubclass(type(self), DataEnvGroup) is True # NOTE : might raise error - remove if so
         goal = get_random_trajectory()[0][self.vis_obv_key][-1]
