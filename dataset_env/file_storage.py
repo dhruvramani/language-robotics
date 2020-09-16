@@ -41,7 +41,7 @@ def store_trajectoy(trajectory, episode_type=config.episode_type):
         Save trajectory to the corresponding database based on env and env_type specified in config.
         + Arguments:
             - trajectory: {deg.vis_obv_key : np.array([n]), deg.dof_obv_key : np.array([n]), 'action' : np.array([n])}
-            - episode_type [optional]: tag to store trajectories with (eg. 'play' or 'imitation')
+            - episode_type [optional]: tag to store trajectories with (eg. 'teleop' or 'imitation')
     '''
     if 'EPISODE_' not in episode_type:
         episode_type = ep_type(episode_type)
@@ -86,7 +86,7 @@ def get_trajectory(episode_type=None, index=None, episode_id=None):
     '''
         Gets a particular trajectory from the corresponding database based on env and env_type specified in config.
         + Arguments:
-            - episode_type [optional]: if you want trajectory specific to one episode_type (eg. 'play' or 'imitation')
+            - episode_type [optional]: if you want trajectory specific to one episode_type (eg. 'teleop' or 'imitation')
             - index [optional]: get trajectory at a particular index
             - episode_id [optional]: get trajectory by it's episode_id (primary key)
         
@@ -113,7 +113,7 @@ def get_random_trajectory(episode_type=None):
     '''
         Gets a random trajectory from the corresponding database based on env and env_type specified in config.
         + Arguments:
-            - episode_type [optional]: if you want trajectory specific to one episode_type (eg. 'play' or 'imitation')
+            - episode_type [optional]: if you want trajectory specific to one episode_type (eg. 'teleop' or 'imitation')
     '''
     count = config.traj_db.objects.count()
     random_index = randint(1, count)

@@ -16,9 +16,9 @@ def get_demons_args():
     parser.add_argument("--collect_by", type=str, default='random', choices=['teleop', 'imitation', 'expert', 'policy', 'exploration', 'random'])
     parser.add_argument("--device", type=str, default="keyboard", choices=["keyboard", "spacemouse"])
     parser.add_argument("--collect_freq", type=int, default=1)
-    parser.add_argument("--flush_freq", type=int, default=75) # NOTE : RAM Issues, change here : 75
+    parser.add_argument("--flush_freq", type=int, default=25) # NOTE : RAM Issues, change here : 75
     parser.add_argument("--break_traj_success", type=utils.str2bool, default=True)
-    parser.add_argument("--n_runs", type=int, default=10, 
+    parser.add_argument("--n_runs", type=int, default=1, #10
         help="no. of runs of traj collection, affective when break_traj_success = False")
 
     # To store the model for imitating the play-data
@@ -31,6 +31,7 @@ def get_demons_args():
     parser.add_argument('--n_gen_traj', type=int, default=200, help="Number of trajectories to generate by imitation")
 
     config = parser.parse_args()
+    config.env_args = env2args(config.env)
     config.deg = env2deg(config.env)
     config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
     config.models_save_path = os.path.join(config.models_save_path, '{}_{}/'.format(config.env, config.env_type))

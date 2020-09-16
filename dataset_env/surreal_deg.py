@@ -7,10 +7,7 @@ from deg_base import DataEnvGroup
 from file_storage import store_trajectoy
 
 ENV_PATH = '/scratch/scratch2/dhruvramani/envs/robosuite'
-def add_env():
-    sys.path.append(ENV_PATH)
-
-add_env()
+sys.path.append(ENV_PATH)
 
 import robosuite as suite
 from robosuite.wrappers import IKWrapper
@@ -19,7 +16,7 @@ import robosuite.utils.transform_utils as T
 class SurrealDataEnvGroup(DataEnvGroup):
     ''' DataEnvGroup for Surreal Robotics Suite environment. 
         
-        + The observation space can be modified through `config.env_args`
+        + The observation space can be modified through `global_config.env_args`
         + Observation space:
             - 'robot-state': proprioceptive feature - vector of:
                 > cos and sin of robot joint positions
@@ -46,7 +43,6 @@ class SurrealDataEnvGroup(DataEnvGroup):
 
     def get_env(self):
         env = suite.make(self.config.env_type, **self.config.env_args)
-        _ = env.reset()
         return env
 
     def play_trajectory(self):
@@ -119,7 +115,7 @@ class SurrealDataEnvGroup(DataEnvGroup):
                 if (int(step % demons_config.flush_freq) == 0) or (demons_config.break_traj_success and task_completion_hold_count == 0):
                     print("Storing Trajectory")
                     trajectory = {self.vis_obv_key : np.array(tr_vobvs), self.dof_obv_key : np.array(tr_dof), 'action' : np.array(tr_actions)}
-                    store_trajectoy(trajectory, 'play')
+                    store_trajectoy(trajectory, 'teleop')
                     trajectory, tr_vobvs, tr_dof, tr_actions = {}, [], [], []
 
                 if demons_config.break_traj_success and env._check_success():
@@ -140,7 +136,7 @@ class SurrealDataEnvGroup(DataEnvGroup):
         env.set_robot_joint_positions([0, -1.18, 0.00, 2.18, 0.00, 0.57, 1.5708]) 
 
         tr_vobvs, tr_dof, tr_actions = [], [], []
-        for step in range(10):
+        for step in range(demons_config.flush_freq):
             tr_vobvs.append(np.array(obs[self.vis_obv_key]))
             tr_dof.append(np.array(obs[self.dof_obv_key].flatten()))
             

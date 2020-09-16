@@ -13,7 +13,7 @@ if __name__ == "__main__":
     elif demon_config.collect_by == 'random':
         deg.random_trajectory(demon_config)
     elif demons_config.collect_by == 'imitation':
-        # NOT TESTED
+        #NOTE : NOT TESTED
         import imitate_play
         
         if demons_config.train_imitation:

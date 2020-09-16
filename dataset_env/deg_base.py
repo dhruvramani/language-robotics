@@ -14,7 +14,7 @@ class DataEnvGroup(object):
     '''
     def __init__(self, get_episode_type=None):
         ''' + Arguments:
-                - get_episode_type: Get data of a particular episode_type (play, imitation, etc.)
+                - get_episode_type: Get data of a particular episode_type (teleop, imitation, etc.)
                     > Default : None, get data with any episode_type.
         '''
         self.config = get_dataset_args()

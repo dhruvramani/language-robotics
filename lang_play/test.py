@@ -3,9 +3,11 @@ import torch
 
 from models import *
 from language_models import *
+from render_browser import render_browser
 
 device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
 
+@render_browser
 def test_experiment(config):
     deg = config.deg()
     env = deg.get_env()
@@ -42,9 +44,10 @@ def test_experiment(config):
                 
                 action, _ = control_module.step(state, goal, z_p)
                 obvs, _, done, _ = env.step(action[0])
-                env.render()
+                yield env.render()
                 t += 1
 
+@render_browser
 def test_with_lang(config):
     deg = config.deg()
     env = deg.get_env()
@@ -87,5 +90,5 @@ def test_with_lang(config):
                 
                 action, _ = control_module.step(state, goal, z_p)
                 obvs, _, done, _ = env.step(action[0])
-                env.render()
+                yield env.render()
                 t += 1

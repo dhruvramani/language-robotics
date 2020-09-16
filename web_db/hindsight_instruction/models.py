@@ -36,6 +36,10 @@ class Instruction(PolymorphicModel):
     def __str__(self):
         return "{} - {} : {}".format(self.env_id, self.task_id, self.instruction)
 
+class RLBenchInstruction(Instruction):
+    ''' Instruction table for RLBench environment. '''
+    pass
+
 class SurrealRoboticsSuiteInstruction(Instruction):
     ''' Instruction table for Surreal Robotics Suite environment. '''
     pass
