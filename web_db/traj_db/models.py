@@ -54,7 +54,7 @@ class Trajectory(PolymorphicModel):
     ]
 
     episode_id = models.UUIDField(default=uuid.uuid4, editable=False)
-    traj_count =  models.AutoField(primary_key=True)
+    traj_count = models.AutoField(primary_key=True, default=1)
     env_id = models.CharField(max_length=50)
     task_id = models.CharField(max_length=50)
     traj_steps = models.IntegerField()

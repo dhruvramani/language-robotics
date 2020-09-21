@@ -46,11 +46,11 @@ def get_model_args():
     config.env_args = env2args(config.env)
     config.deg = env2deg(config.env)
     if config.use_lang and not config.use_visual_models:
-        config.models_save_path = os.path.join(config.models_save_path, '{}_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name, config.lang_model)) 
-        config.tensorboard_path = os.path.join(config.tensorboard_path, '{}_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name, config.lang_model)) 
+        config.models_save_path = os.path.join(config.models_save_path, 'langplay_{}_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name, config.lang_model)) 
+        config.tensorboard_path = os.path.join(config.tensorboard_path, 'langplay_{}_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name, config.lang_model)) 
     else:
-        config.models_save_path = os.path.join(config.models_save_path, '{}_{}_{}/'.format(config.env, config.env_type, config.exp_name)) 
-        config.tensorboard_path = os.path.join(config.tensorboard_path, '{}_{}_{}/'.format(config.env, config.env_type, config.exp_name)) 
+        config.models_save_path = os.path.join(config.models_save_path, 'langplay_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name)) 
+        config.tensorboard_path = os.path.join(config.tensorboard_path, 'langplay_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name)) 
     config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
 
     if config.is_train and not config.resume:

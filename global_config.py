@@ -45,14 +45,13 @@ def env2args(env_name):
         camera_height=256, camera_width=256, camera_name='agentview', use_object_obs=False, reward_shaping=True)
 
     # NOTE - WARNING : observation_mode='vision' very heavy
-    rlbench_args = dict(use_gym=True, observation_mode='state', vis_obv_key='left_shoulder_rgb', render_mode='rgb_array',
+    rlbench_args = dict(use_gym=False, observation_mode='left_shoulder_rgb', vis_obv_key='left_shoulder_rgb', render_mode='rgb_array',
         keyboard_teleop=False)
 
     furniture_args = dict()
 
     env2args_dict = {'SURREAL' : surreal_args, 'FURNITURE' : furniture_args, 'RLBENCH' : rlbench_args}
     return env2args_dict[env_name]
-
 
 def env2deg(env_name):
     from dataset_env.surreal_deg import SurrealDataEnvGroup

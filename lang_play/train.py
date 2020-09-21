@@ -38,6 +38,7 @@ def train_multi_context_goals(config):
         params += list(instruction_encoder.goal_dist.parameters()) 
 
     print("Number of parameters : {}".format(len(params)))
+    optimizer = torch.optim.Adam(params, lr=config.learning_rate)
 
     if(config.save_graphs):
         tensorboard_writer.add_graph(perception_module)
@@ -48,8 +49,6 @@ def train_multi_context_goals(config):
 
         if config.use_lang:
             tensorboard_writer.add_graph(instruction_encoder)
-
-    optimizer = torch.optim.Adam(params, lr=config.learning_rate)
 
     if(config.resume):
         # TODO : IMPORTANT - Check if file exist before loading
@@ -66,7 +65,7 @@ def train_multi_context_goals(config):
         elif config.use_lang:
             instruction_encoder.load_state_dict(torch.load(os.path.join(config.models_save_path, 'basic_instruct_model.pth')))
 
-    print("Run : tensorboard --logdir={} --host '0.0.0.0' --port 6006".format(config.tensorboard_path))
+    print("Run : `tensorboard --logdir={} --host '0.0.0.0' --port 6006`".format(config.tensorboard_path))
     # NOTE : Assuming all sequences are of same length - [batch_size, seq_len, dims]
     # TODO *IMPORTANT* : Implement trajectory cropping within training loop - each batch should have same seq_len.
     visual_data_loader = DataLoader(deg.traj_dataset, batch_size=config.batch_size, shuffle=True, num_workers=config.num_workers)
@@ -147,7 +146,7 @@ def train_multi_context_goals(config):
         tensorboard_writer.add_scalar('loss/language', loss_lang, epoch)
         tensorboard_writer.add_scalar('loss/total', loss, epoch)
 
-        if int(i % config.save_interval_epoch) == 0:
+        if int(epoch % config.save_interval_epoch) == 0:
             torch.save(perception_module.state_dict(), os.path.join(config.models_save_path, 'perception.pth'))
             torch.save(visual_goal_encoder.state_dict(), os.path.join(config.models_save_path, 'visual_goal.pth'))
             torch.save(plan_recognizer.state_dict(), os.path.join(config.models_save_path, 'plan_recognizer.pth'))
@@ -159,3 +158,10 @@ def train_multi_context_goals(config):
                 torch.save(instruction_encoder.goal_dist.state_dict(), os.path.join(config.models_save_path, 'lang_model_{}.pth'.format(config.lang_model)))
             elif config.use_lang:
                 torch.save(instruction_encoder.state_dict(), os.path.join(config.models_save_path, 'basic_instruct_model.pth'))
+
+if __name__ == '__main__':
+    from model_config import get_model_args
+    config = get_model_args()
+    torch.manual_seed(config.seed)
+    
+    train_multi_context_goals(config)

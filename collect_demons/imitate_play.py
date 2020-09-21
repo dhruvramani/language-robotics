@@ -52,7 +52,7 @@ class PlayGenerationModule(torch.nn.Module):
             assert perception_module is not None
             state = perception_module(state)
 
-          # The hidden states of the RNN.
+        # The hidden states of the RNN.
         self.h1 = torch.randn(state.shape[0], self.hidden_size)
         self.h2 = torch.randn(state.shape[0], self.hidden_size)
         if self.rnn_type == 'LSTM':

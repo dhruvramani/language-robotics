@@ -24,10 +24,10 @@ def get_model_args():
     parser.add_argument('--save_interval_steps', type=int, default=100)
     parser.add_argument('--save_interval_epoch', type=int, default=10)
 
-    path.add_argument('--set_size', type=int, default=64)
+    parser.add_argument('--state_set_size', type=int, default=64)
 
-    parser.add_argument('--max_epochs', type=int, default=4) #50
-    parser.add_argument('--batch_size', type=int, default=2)
+    parser.add_argument('--max_epochs', type=int, default=50) #50
+    parser.add_argument('--batch_size', type=int, default=5)
     parser.add_argument('--learning_rate', type=float, default=2e-4)
     parser.add_argument('--n_test_evals', type=int, default=10)
     parser.add_argument('--max_test_timestep', type=int, default=40)
@@ -40,8 +40,8 @@ def get_model_args():
     config.deg = env2deg(config.env)
 
     config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
-    config.models_save_path = os.path.join(config.models_save_path, '{}_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name, config.lang_model)) 
-    config.tensorboard_path = os.path.join(config.tensorboard_path, '{}_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name, config.lang_model)) 
+    config.models_save_path = os.path.join(config.models_save_path, 'contattn_{}_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name, config.lang_model)) 
+    config.tensorboard_path = os.path.join(config.tensorboard_path, 'contattn_{}_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name, config.lang_model)) 
 
     if config.is_train and not config.resume:
         utils.recreate_dir(config.models_save_path, config.display_warnings)

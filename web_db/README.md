@@ -1,5 +1,3 @@
-## TODO 
-
 To run the usual commands on manage.py, run `python3 manage.py` and enter command when prompted. Had to edit it out (see `manage.py`) due to errors with argv and configs. For running `runserver`, type the command twice (as prompted).
 
 Commands to run when setting up from scratch.
@@ -7,10 +5,11 @@ Commands to run when setting up from scratch.
 makemigrations
 migrate
 createsuperuser
-python manage.py syncdb
+syncdb
 
 ```
-- I think tested, works fine. Just edit the front end ig.
+NOTE : If something goes wrong with the DB, delete all data from the admin, delete the `migrations` & `__pycache__` folders. Create a new `migrations` folder, add `__init_.py` and run the above migration based commands.
+
 + Each env has it's own seperate table to store data.
 + 2 Apps :
   - `traj_db` : Contains the main meta-data DB to store the trajectories. Stores the language/instruction schema too.
@@ -24,4 +23,6 @@ python manage.py syncdb
   - https://ngrok.com/
   - https://medium.com/@kshitijvijay271199/flask-on-google-colab-f6525986797b
   - https://stackoverflow.com/questions/59741453/is-there-a-general-way-to-run-web-applications-on-google-colab
-  
+
+## TODO
+- I think tested, works fine. Just edit the front end ig.

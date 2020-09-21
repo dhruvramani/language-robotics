@@ -35,7 +35,6 @@ def add_vocab(sentence):
     with open(config.vocab_path, 'wb') as pkl_file:
         pickle.dump(vocab, pkl_file)
 
-# TESTED
 def store_trajectoy(trajectory, episode_type=config.episode_type):
     ''' 
         Save trajectory to the corresponding database based on env and env_type specified in config.
@@ -59,8 +58,6 @@ def store_trajectoy(trajectory, episode_type=config.episode_type):
     with open(metadata.data_path, 'wb') as file:
         pickle.dump(trajectory, file, protocol=pickle.HIGHEST_PROTOCOL)
 
-
-# TESTED
 def get_instruct_traj(index=None, instruction_id=None):
     '''
         Gets a particular instruction & corresponding trajectory from the corresponding database based on env and env_type specified in config.
@@ -81,7 +78,6 @@ def get_instruct_traj(index=None, instruction_id=None):
     trajectory = get_trajectory(episode_id=str(trajectory_obj.episode_id))
     return instruction_obj.instruction, trajectory 
 
-# TESTED
 def get_trajectory(episode_type=None, index=None, episode_id=None):
     '''
         Gets a particular trajectory from the corresponding database based on env and env_type specified in config.
@@ -101,6 +97,7 @@ def get_trajectory(episode_type=None, index=None, episode_id=None):
         else:
             metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index + 1, episode_type=episode_type)
     elif episode_id is not None:
+        episode_id = str(episode_id)
         metadata = config.traj_db.objects.get(episode_id=uuid.UUID(episode_id))
     
     with open(metadata.data_path, 'rb') as file:
@@ -108,7 +105,30 @@ def get_trajectory(episode_type=None, index=None, episode_id=None):
 
     return trajectory
 
-# TESTED
+# def get_batch_trajectory(batch_range=(None, None), episode_type=None):
+#     if None in batch_range and episode_type is None:
+#         batch = config.traj_db.objects.all()
+#     elif None not in batch_range and episode_type is not None:
+#         batch = config.traj_db.objects.filter(episode_type=episode_type, traj_count__gte=batch_range[0], traj_count__lte=batch_range[1])
+#     elif episode_type is not None:
+#         batch = config.traj_db.objects.filter(episode_type=episode_type)
+#     else:
+#         batch = config.traj_db.objects.filter(traj_count__gte=batch_range[0], traj_count__lte=batch_range[1])
+
+#     batch_trajs = get_trajectory(episode_id=batch[0].episode_id)
+#     tr_vobvs, tr_dof, tr_actions = batch_trajs[config.obv_keys['vis_obv_key']], batch_trajs[config.obv_keys['dof_obv_key']], batch_trajs['action']
+#     for traj in batch[1:]:
+#         traj = get_trajectory(episode_id=traj.episode_id)
+#         tr_vobvs = np.concatenate((tr_vobvs, traj[config.obv_keys['vis_obv_key']]), axis=0)
+#         tr_dof = np.concatenate((tr_dof, traj[config.obv_keys['dof_obv_key']]), axis=0)
+#         tr_actions = np.concatenate((tr_vobvs, traj['action']]), axis=0)
+
+#     batch_trajs[config.obv_keys['vis_obv_key']] = tr_vobvs
+#     batch_trajs[config.obv_keys['dof_obv_key']] = tr_dof
+#     batch_trajs['action'] = tr_actions
+
+#     return batch_trajs
+
 def get_random_trajectory(episode_type=None):
     '''
         Gets a random trajectory from the corresponding database based on env and env_type specified in config.
@@ -127,15 +147,13 @@ def get_random_trajectory(episode_type=None):
 
     return trajectory, episode_id
 
-# TESTED
 def create_video(trajectory):
     '''
         Creates videos and stores video, the initial and the final frame in the paths specified in data_config. 
         + Arguments:
             - trajectory: {deg.vis_obv_key : np.array([n]), deg.dof_obv_key : np.array([n]), 'action' : np.array([n])}
     '''
-    # TODO - change 'image' to config.deg.vis_obv_key
-    frames = trajectory['image'].astype(np.uint8)
+    frames = trajectory[config.obv_keys['vis_obv_key']].astype(np.uint8)
     assert frames.shape[-1] == 3
     
     inital_obv, goal_obv = Image.fromarray(frames[0]), Image.fromarray(frames[-1])
@@ -148,7 +166,7 @@ def create_video(trajectory):
     torchvision.io.write_video(config.vid_path, frames, config.fps)
     return config.vid_path
 
-
+# NOT TESTED
 def archive_traj_task(task=config.env_type, episode_type=None, file_name=None):
     ''' 
         Archives trajectories by task (env_type)
@@ -183,7 +201,6 @@ def archive_traj_task(task=config.env_type, episode_type=None, file_name=None):
         archive.save()
     tar.close()
 
-# TESTED
 def delete_trajectory(episode_id):
     obj = config.traj_db.objects.get(episode_id=episode_id)
     if os.path.exists(obj.data_path):

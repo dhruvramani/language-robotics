@@ -17,6 +17,38 @@ from hindsight_instruction.models import SurrealRoboticsSuiteInstruction, USCFur
 taj_db_dict = {'SURREAL' : SurrealRoboticsSuiteTrajectory, 'FURNITURE' : USCFurnitureTrajectory, 'RLBENCH' : RLBenchTrajectory}
 instruct_db_dict = {'SURREAL' : SurrealRoboticsSuiteInstruction, 'FURNITURE' : USCFurnitureInstruction, 'RLBENCH' : RLBenchInstruction}
 
+def get_dataset_args():
+    parser = get_global_parser()
+
+    # NOTE: 'SURREAL' is a placeholder. The dbs are set according to global_config.env -> see below. v
+    parser.add_argument('--traj_db', type=env2TrajDB, default='SURREAL')
+    parser.add_argument('--instruct_db', type=env2InstructDB, default='SURREAL')
+    parser.add_argument('--obv_keys', type=env2keys, default='SURREAL')
+    parser.add_argument('--archives_path', type=str, default=os.path.join(DATA_DIR, 'data_files/archives'))
+    parser.add_argument('--episode_type', type=ep_type, default='teleop', choices=['teleop', 'imitation', 'expert', 'policy', 'exploration', 'random'])
+    parser.add_argument('--media_dir', type=str, default=os.path.join(BASE_DIR, 'web_db/static/media/'))
+    parser.add_argument('--vid_path', type=str, default='vid.mp4')
+    parser.add_argument('--fps', type=int, default=30)
+    parser.add_argument('--vocab_path', type=str, default=os.path.join(DATA_DIR, 'data_files/vocab.pkl'))
+
+    parser.add_argument('--data_agumentation', type=utils.str2bool, default=False) # WARNING : Don't use now, UNSTABLE.
+    parser.add_argument('--augs', type=utils.str2list, default='crop', help='See others in data_aug.py')
+    
+    config = parser.parse_args()
+    config.env_args = env2args(config.env)
+    config.traj_db = env2TrajDB(config.env)
+    config.obv_keys = env2keys(config.env)
+    config.instruct_db = env2InstructDB(config.env)
+    config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
+    config.archives_path = os.path.join(config.archives_path, '{}_{}/'.format(config.env, config.env_type)) 
+    config.vid_path = os.path.join(config.media_dir, config.vid_path)
+
+    utils.check_n_create_dir(config.data_path, config.display_warnings)
+    utils.check_n_create_dir(config.archives_path, config.display_warnings)
+    utils.check_n_create_dir(config.media_dir, config.display_warnings)
+
+    return config
+
 def env2TrajDB(string):
     if string is None:
         return None
@@ -33,35 +65,11 @@ def ep_type(string):
                 'exploration': 'EPISODE_ROBOT_EXPLORED', 'random': 'EPISODE_ROBOT_RANDOM'}
     return ep_dict[string.lower()]
 
-def get_dataset_args():
-    parser = get_global_parser()
-
-    # NOTE: 'SURREAL' is a placeholder. The dbs are set according to global_config.env -> see below. v
-    parser.add_argument('--traj_db', type=env2TrajDB, default='SURREAL')
-    parser.add_argument('--instruct_db', type=env2InstructDB, default='SURREAL')
-    parser.add_argument('--archives_path', type=str, default=os.path.join(DATA_DIR, 'data_files/archives'))
-    parser.add_argument('--episode_type', type=ep_type, default='teleop', choices=['teleop', 'imitation', 'expert', 'policy', 'exploration', 'random'])
-    parser.add_argument('--media_dir', type=str, default=os.path.join(BASE_DIR, 'web_db/static/media/'))
-    parser.add_argument('--vid_path', type=str, default='vid.mp4')
-    parser.add_argument('--fps', type=int, default=30)
-    parser.add_argument('--vocab_path', type=str, default=os.path.join(DATA_DIR, 'data_files/vocab.pkl'))
-
-    parser.add_argument('--data_agumentation', type=utils.str2bool, default=False) # WARNING : Don't use now, UNSTABLE.
-    parser.add_argument('--augs', type=utils.str2list, default='crop', help='See others in data_aug.py')
-    
-    config = parser.parse_args()
-    config.env_args = env2args(config.env)
-    config.traj_db = env2TrajDB(config.env)
-    config.instruct_db = env2InstructDB(config.env)
-    config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
-    config.archives_path = os.path.join(config.archives_path, '{}_{}/'.format(config.env, config.env_type)) 
-    config.vid_path = os.path.join(config.media_dir, config.vid_path)
-
-    utils.check_n_create_dir(config.data_path, config.display_warnings)
-    utils.check_n_create_dir(config.archives_path, config.display_warnings)
-    utils.check_n_create_dir(config.media_dir, config.display_warnings)
-
-    return config
+def env2keys(string):
+    ep_dict = {'RLBENCH'  : {'vis_obv_key' : 'left_shoulder_rgb', 'dof_obv_key' : 'state'},
+               'SURREAL'  : {'vis_obv_key' : 'image', 'dof_obv_key' : 'robot-state'},
+               'FURNITURE': {'vis_obv_key' : 'image', 'dof_obv_key' : 'robot-state'}} # TODO : edit this
+    return ep_dict[string.upper()]
 
 if __name__ == '__main__':
     print("=> Testing data_config.py")

@@ -58,8 +58,8 @@ class RLBenchDataEnvGroup(DataEnvGroup):
         self.action_space = (8)
 
     def get_env(self, task=None):
+        task = task if task else self.config.env_type
         if self.config.env_args['use_gym']:
-            task = task if task else self.config.env_type
             assert type(task) == str # NOTE : When using gym, the task has to be represented as a sting.
             assert self.observation_mode in ['vision', 'state']
 
@@ -91,6 +91,7 @@ class RLBenchDataEnvGroup(DataEnvGroup):
 
             task = task if task else ReachTarget
             if type(task) == str:
+                task = task.split('-')[0]
                 task = self.env_obj._string_to_task(task)
             
             self.env_obj.launch()
@@ -98,9 +99,12 @@ class RLBenchDataEnvGroup(DataEnvGroup):
         return env
 
     def _get_obs(self, obs, key):
+        assert obs is not None and key is not None
         if type(obs) == dict:
             return obs[key]
         elif type(obs) == Observation:
+            if key == 'state':
+                return obs.get_low_dim_data()
             return getattr(obs, key)
 
     def shutdown_env(self):
@@ -110,7 +114,7 @@ class RLBenchDataEnvGroup(DataEnvGroup):
             self.env_obj.shutdown()
         self.env_obj = None
 
-    def teleoperate(self, demon_config):
+    def teleoperate(self, demons_config):
         if self.config.env_args['keyboard_teleop']:
             raise NotImplementedError
         else:
@@ -162,12 +166,16 @@ if __name__ == '__main__':
     from torch.utils.data import DataLoader
     print("=> Testing surreal_deg.py")
 
-    deg = SurrealDataEnvGroup()
+    deg = RLBenchDataEnvGroup()
     print(deg.obs_space[deg.vis_obv_key], deg.action_space)
-    print(deg.get_env().reset()[deg.dof_obv_key].shape)
+    # env = deg.get_env()
+    # obs = env.reset()
+    # print(deg._get_obs(obs, deg.dof_obv_key).shape)
 
-    traj_data = DataLoader(deg.traj_dataset, sample_size=1, shuffle=True, num_workers=1)
+    traj_data = DataLoader(deg.traj_dataset, batch_size=1, shuffle=True, num_workers=1)
     print(next(iter(traj_data))[deg.dof_obv_key].shape)
 
-    instruct_data = DataLoader(deg.instruct_dataset, sample_size=1, shuffle=True, num_workers=1)
-    print(next(iter(instruct_data))['instruction'])
+    # instruct_data = DataLoader(deg.instruct_dataset, sample_size=1, shuffle=True, num_workers=1)
+    # print(next(iter(instruct_data))['instruction'])
+
+    deg.shutdown_env()
