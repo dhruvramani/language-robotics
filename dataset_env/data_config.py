@@ -4,9 +4,9 @@ import argparse
 import django
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../web_db/'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../db/'))
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "web_db.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "db.settings")
 django.setup()
 
 import utils
@@ -26,7 +26,7 @@ def get_dataset_args():
     parser.add_argument('--obv_keys', type=env2keys, default='SURREAL')
     parser.add_argument('--archives_path', type=str, default=os.path.join(DATA_DIR, 'data_files/archives'))
     parser.add_argument('--episode_type', type=ep_type, default='teleop', choices=['teleop', 'imitation', 'expert', 'policy', 'exploration', 'random'])
-    parser.add_argument('--media_dir', type=str, default=os.path.join(BASE_DIR, 'web_db/static/media/'))
+    parser.add_argument('--media_dir', type=str, default=os.path.join(BASE_DIR, 'db/static/media/'))
     parser.add_argument('--vid_path', type=str, default='vid.mp4')
     parser.add_argument('--fps', type=int, default=30)
     parser.add_argument('--vocab_path', type=str, default=os.path.join(DATA_DIR, 'data_files/vocab.pkl'))

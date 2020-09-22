@@ -1,8 +1,10 @@
 # Byte-compiled / optimized / DLL files
 sftp-config.json
+db/static/media
 web_db/static/media
 dataset_env/surreal
 dataset_env/furniture
+dataset_env/rlbench
 __pycache__/
 *.py[cod]
 *$py.class

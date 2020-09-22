@@ -1,7 +1,7 @@
-"""web_db URL Configuration
+"""db URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/3.0/topics/http/urls/
+    https://docs.djangoproject.com/en/3.1/topics/http/urls/
 Examples:
 Function views
     1. Add an import:  from my_app import views
@@ -19,5 +19,5 @@ from hindsight_instruction import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.hindsight_instruction, name="hindsight_instruction")
+    path('', views.hindsight_instruction, name="hindsight_instruction"),
 ]
