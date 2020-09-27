@@ -123,6 +123,7 @@ def train_imitation(demons_config):
 
     print("Run : tensorboard --logdir={} --host '0.0.0.0' --port 6006".format(demons_config.tensorboard_path))
     data_loader = DataLoader(deg.traj_dataset, batch_size=model_config.batch_size, shuffle=True, num_workers=1)
+    max_step_size = len(data_loader.dataset)
 
     for epoch in tqdm(range(model_config.max_epochs), desc="Check Tensorboard"):
         for i, trajectory in enumerate(data_loader):
@@ -143,7 +144,7 @@ def train_imitation(demons_config):
             loss = -logp_a
             loss = loss.mean()
 
-            tensorboard_writer.add_scalar('Clone Loss', loss)
+            tensorboard_writer.add_scalar('Clone Loss', loss, epoch * max_step_size + i)
             loss.backward()
             optimizer.step()
 

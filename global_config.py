@@ -46,7 +46,7 @@ def env2args(env_name):
 
     # NOTE - WARNING : observation_mode='vision' very heavy
     rlbench_args = dict(use_gym=False, observation_mode='left_shoulder_rgb', vis_obv_key='left_shoulder_rgb', render_mode='rgb_array',
-        keyboard_teleop=False)
+        keyboard_teleop=False, combine_action_space=True)
 
     furniture_args = dict()
 

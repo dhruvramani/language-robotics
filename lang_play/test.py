@@ -1,3 +1,4 @@
+import os
 import numpy
 import torch
 
@@ -92,3 +93,8 @@ def test_with_lang(config):
                 obvs, _, done, _ = env.step(action[0])
                 yield env.render()
                 t += 1
+
+if __name__ == '__main__':
+    from model_config import get_model_args
+    config = get_model_args()
+    test_experiment(config)

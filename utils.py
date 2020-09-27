@@ -3,7 +3,7 @@ import sys
 import shutil
 import pathlib
 
-def delete_folder(pth) :
+def delete_folder(pth):
     pth = pathlib.Path(pth)
     for sub in pth.iterdir() :
         if sub.is_dir() :
@@ -12,9 +12,12 @@ def delete_folder(pth) :
             sub.unlink()
     pth.rmdir()
 
+def delete_shutil(path):
+    shutil.rmtree(path)
+
 def recreate_dir(path, display_warning=True):
     if os.path.exists(path):
-        delete_folder(path)
+        delete_shutil(path)
     os.makedirs(path)
     
     if display_warning:

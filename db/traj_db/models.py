@@ -54,7 +54,9 @@ class Trajectory(PolymorphicModel):
     ]
 
     episode_id = models.UUIDField(default=uuid.uuid4, editable=False)
-    traj_count = models.AutoField(primary_key=True, default=1)
+    traj_count = models.AutoField(primary_key=True) 
+    # NOTE: In Utopia, this should be defined in subclasses. 
+    #       But => both sub & super have diff. PKs - Error.
     env_id = models.CharField(max_length=50)
     task_id = models.CharField(max_length=50)
     traj_steps = models.IntegerField()

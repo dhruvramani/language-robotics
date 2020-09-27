@@ -13,7 +13,6 @@ from data_config import get_dataset_args, ep_type
 from PIL import Image
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../traj_db/'))
-
 config = get_dataset_args()
 
 from traj_db.models import ArchiveFile
@@ -58,6 +57,14 @@ def store_trajectoy(trajectory, episode_type=config.episode_type):
     with open(metadata.data_path, 'wb') as file:
         pickle.dump(trajectory, file, protocol=pickle.HIGHEST_PROTOCOL)
 
+def save_instruct_traj(traj_id, instruction):
+    traj_id = str(traj_id)
+    trajectory = config.traj_db.objects.get(episode_id=uuid.UUID(traj_id))
+    instruct_obj = config.instruct_db(env_id=trajectory.env_id, task_id=trajectory.task_id,
+        instruction=instruction, trajectory=trajectory)
+    instruct_obj.save()
+    return True
+
 def get_instruct_traj(index=None, instruction_id=None):
     '''
         Gets a particular instruction & corresponding trajectory from the corresponding database based on env and env_type specified in config.
@@ -67,12 +74,14 @@ def get_instruct_traj(index=None, instruction_id=None):
           
         + NOTE: either index or episode_id should be not None.
     '''
-    assert index is not None or instruction_id is not None
+    if index is None and instruction_id is None:
+        return [get_instruct_traj(instruction_id=instruct_obj.instruction_id) for instruct_obj in config.instruct_db.objects.all()]
 
     if index is not None:
-        instruction_obj = config.instruct_db.objects.get(task_id=config.env_type, instruction_count=index + 1)
+        instruction_obj = config.instruct_db.objects.filter(task_id=config.env_type)[index]
     elif instruction_id is not None:
-        instruction_obj = config.instruct_db.objects.get(task_id=config.env_type, instruction_id=uuid.UUID(instruction_id))
+        instruction_id = str(instruction_id)
+        instruction_obj = config.instruct_db.objects.get(instruction_id=uuid.UUID(instruction_id))
 
     trajectory_obj = instruction_obj.trajectory
     trajectory = get_trajectory(episode_id=str(trajectory_obj.episode_id))
@@ -90,12 +99,14 @@ def get_trajectory(episode_type=None, index=None, episode_id=None):
         + NOTE: episode_type, env_type become POINTLESS when you pass episode_id.
     '''
     # TODO : If trajectory is in archive-file, get it from there
-    assert episode_id is not None or index is not None
+    if episode_id is None and index is None:
+        return [get_trajectory(episode_id=traj_obj.episode_id) for traj_obj in config.traj_db.objects.all()]
+
     if index is not None:
         if episode_type is None: # TODO : Clean code
-            metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index + 1)
+            metadata = config.traj_db.objects.filter(task_id=config.env_type)[index]
         else:
-            metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=index + 1, episode_type=episode_type)
+            metadata = config.traj_db.objects.filter(task_id=config.env_type, episode_type=episode_type)[index]
     elif episode_id is not None:
         episode_id = str(episode_id)
         metadata = config.traj_db.objects.get(episode_id=uuid.UUID(episode_id))
@@ -104,30 +115,6 @@ def get_trajectory(episode_type=None, index=None, episode_id=None):
         trajectory = pickle.load(file)
 
     return trajectory
-
-# def get_batch_trajectory(batch_range=(None, None), episode_type=None):
-#     if None in batch_range and episode_type is None:
-#         batch = config.traj_db.objects.all()
-#     elif None not in batch_range and episode_type is not None:
-#         batch = config.traj_db.objects.filter(episode_type=episode_type, traj_count__gte=batch_range[0], traj_count__lte=batch_range[1])
-#     elif episode_type is not None:
-#         batch = config.traj_db.objects.filter(episode_type=episode_type)
-#     else:
-#         batch = config.traj_db.objects.filter(traj_count__gte=batch_range[0], traj_count__lte=batch_range[1])
-
-#     batch_trajs = get_trajectory(episode_id=batch[0].episode_id)
-#     tr_vobvs, tr_dof, tr_actions = batch_trajs[config.obv_keys['vis_obv_key']], batch_trajs[config.obv_keys['dof_obv_key']], batch_trajs['action']
-#     for traj in batch[1:]:
-#         traj = get_trajectory(episode_id=traj.episode_id)
-#         tr_vobvs = np.concatenate((tr_vobvs, traj[config.obv_keys['vis_obv_key']]), axis=0)
-#         tr_dof = np.concatenate((tr_dof, traj[config.obv_keys['dof_obv_key']]), axis=0)
-#         tr_actions = np.concatenate((tr_vobvs, traj['action']]), axis=0)
-
-#     batch_trajs[config.obv_keys['vis_obv_key']] = tr_vobvs
-#     batch_trajs[config.obv_keys['dof_obv_key']] = tr_dof
-#     batch_trajs['action'] = tr_actions
-
-#     return batch_trajs
 
 def get_random_trajectory(episode_type=None):
     '''
@@ -138,9 +125,9 @@ def get_random_trajectory(episode_type=None):
     count = config.traj_db.objects.count()
     random_index = randint(1, count)
     if episode_type is None:
-        metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index)
+        metadata = config.traj_db.objects.filter(task_id=config.env_type)[random_index]
     else:
-        metadata = config.traj_db.objects.get(task_id=config.env_type, traj_count=random_index, episode_type=episode_type)
+        metadata = config.traj_db.objects.filter(task_id=config.env_type, episode_type=episode_type)[random_index]
     
     episode_id = str(metadata.episode_id)
     trajectory = get_trajectory(episode_id=episode_id)

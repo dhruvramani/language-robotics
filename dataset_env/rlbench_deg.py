@@ -38,6 +38,8 @@ class RLBenchDataEnvGroup(DataEnvGroup):
     def __init__(self, get_episode_type=None):
         super(RLBenchDataEnvGroup, self).__init__(get_episode_type)
         assert self.env_name == 'RLBENCH'
+        self.env_obj = None
+        self.use_gym = self.config.env_args['use_gym']
 
         self.observation_mode = self.config.env_args['observation_mode'].lower()
         self.left_obv_key  = 'left_shoulder_rgb'
@@ -45,21 +47,24 @@ class RLBenchDataEnvGroup(DataEnvGroup):
         self.wrist_obv_key = 'wrist_rgb'
         self.front_obv_key = 'front_rgb'
 
-        if self.observation_mode not in ['vision', 'state']:
+        if self.observation_mode not in ['vision', 'state'] and not self.use_gym:
             self.config.env_args['vis_obv_key'] = self.observation_mode
 
         self.vis_obv_key = self.config.env_args['vis_obv_key']
         self.dof_obv_key = 'state'
-        # TODO : Include gripper pose into this - make a _get_action function ig
         self.env_action_key = 'joint_velocities'
+        self.env_gripper_key = 'gripper_open'
 
         self.obs_space = {self.dof_obv_key : (40),self.left_obv_key : (128, 128, 3), self.right_obv_key : (128, 128, 3),
                     self.wrist_obv_key : (128, 128, 3), self.front_obv_key: (128, 128, 3)}
-        self.action_space = (8)
+        
+        self.action_space, self.gripper_space = (7), (1)
+        if self.config.env_args['combine_action_space']:
+            self.action_space += self.gripper_space
 
     def get_env(self, task=None):
         task = task if task else self.config.env_type
-        if self.config.env_args['use_gym']:
+        if self.use_gym:
             assert type(task) == str # NOTE : When using gym, the task has to be represented as a sting.
             assert self.observation_mode in ['vision', 'state']
 
@@ -82,8 +87,8 @@ class RLBenchDataEnvGroup(DataEnvGroup):
                 assert self.observation_mode in obs_config_dict.keys()
 
                 obs_config.set_all_high_dim(False)
-                obs_config.set_all_low_dim(True)
                 obs_config_dict[self.observation_mode].set_all(True)
+                obs_config.set_all_low_dim(True)
 
             # TODO : Write code to change it from env_args
             action_mode = ActionMode(ArmActionMode.ABS_JOINT_VELOCITY)
@@ -100,6 +105,8 @@ class RLBenchDataEnvGroup(DataEnvGroup):
 
     def _get_obs(self, obs, key):
         assert obs is not None and key is not None
+        if type(obs) == tuple:
+            obs = obs[1]
         if type(obs) == dict:
             return obs[key]
         elif type(obs) == Observation:
@@ -108,7 +115,9 @@ class RLBenchDataEnvGroup(DataEnvGroup):
             return getattr(obs, key)
 
     def shutdown_env(self):
-        if self.config.env_args['use_gym']:
+        if self.env_obj is None:
+            print("Environment not created, call `.get_env()`")
+        elif self.use_gym:
             self.env_obj.close()
         else:
             self.env_obj.shutdown()
@@ -119,7 +128,7 @@ class RLBenchDataEnvGroup(DataEnvGroup):
             raise NotImplementedError
         else:
             env = self.get_env()
-            if self.config.env_args['use_gym']:
+            if self.use_gym:
                 demos = env.task.get_demos(demons_config.n_runs, live_demos=True)
             else : 
                 demos = env.get_demos(demons_config.n_runs, live_demos=True)
@@ -131,6 +140,10 @@ class RLBenchDataEnvGroup(DataEnvGroup):
                     tr_vobvs = np.array([self._get_obs(obs, self.vis_obv_key) for obs in sample])
                 tr_dof = np.array([self._get_obs(obs, self.dof_obv_key).flatten() for obs in sample])
                 tr_actions = np.array([self._get_obs(obs, self.env_action_key).flatten() for obs in sample])
+                tr_gripper = np.array([[self._get_obs(obs, self.env_gripper_key)] for obs in sample])
+
+                if self.config.env_args['combine_action_space']:
+                    tr_actions = np.concatenate((tr_actions, tr_gripper), axis=-1)
 
                 print("Storing Trajectory")
                 trajectory = {self.dof_obv_key : tr_dof, 'action' : tr_actions}
@@ -164,15 +177,17 @@ class RLBenchDataEnvGroup(DataEnvGroup):
 
 if __name__ == '__main__':
     from torch.utils.data import DataLoader
-    print("=> Testing surreal_deg.py")
+    print("=> Testing rlbench_deg.py")
 
     deg = RLBenchDataEnvGroup()
     print(deg.obs_space[deg.vis_obv_key], deg.action_space)
-    # env = deg.get_env()
-    # obs = env.reset()
-    # print(deg._get_obs(obs, deg.dof_obv_key).shape)
+    env = deg.get_env()
+    obs = env.reset()
+    print(obs)
+    print(deg._get_obs(obs, deg.dof_obv_key).shape)
 
-    traj_data = DataLoader(deg.traj_dataset, batch_size=1, shuffle=True, num_workers=1)
+    #traj_data = DataLoader(deg.traj_dataset, batch_size=1, shuffle=True, num_workers=1)
+    traj_data = deg.get_traj_dataloader(batch_size=5)
     print(next(iter(traj_data))[deg.dof_obv_key].shape)
 
     # instruct_data = DataLoader(deg.instruct_dataset, sample_size=1, shuffle=True, num_workers=1)

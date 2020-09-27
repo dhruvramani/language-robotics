@@ -26,10 +26,12 @@ class Instruction(PolymorphicModel):
                 > Also while training, we only need trajectoies containing instructions. Easier this way.
     ''' 
     instruction_id = models.UUIDField(default=uuid.uuid4, editable=False)
-    instruction_count =  models.AutoField(primary_key=True, default=1)
+    instruction_count =  models.AutoField(primary_key=True)
+    # NOTE: In Utopia, ^ should be defined in subclasses. 
+    #       But => both sub & super have diff. PKs - Error.
     env_id = models.CharField(max_length=50)
     task_id = models.CharField(max_length=50)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    #user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     instruction = models.CharField(max_length=int(1e4))
     trajectory = models.ForeignKey(Trajectory, on_delete=models.CASCADE)
 
