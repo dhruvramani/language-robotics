@@ -18,7 +18,7 @@ def hindsight_instruction(request):
         #file_storage.add_vocab(instruction)
         save_success = file_storage.save_instruct_traj(episode_id, instruction)
 
-    trajectory, episode_id = file_storage.get_random_trajectory()
+    trajectory, episode_id, task_id = file_storage.get_random_trajectory()
     vid_path = file_storage.create_video(trajectory)
     assert os.path.isfile(vid_path)
 

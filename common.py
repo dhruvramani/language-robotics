@@ -4,10 +4,6 @@ import torch
 import numpy as np
 from transformers import *
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../dataset_env'))
-
-import file_storage
-
 device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
 
 MODELS = {"bert":     (BertModel,       BertTokenizer,       'bert-base-uncased',     768),
@@ -45,31 +41,6 @@ class LanguageModelInstructionEncoder(torch.nn.Module):
     def forward(self, text):
         embedding = self.lang_callback(text)
         return embedding
-
-def get_similar_traj(config, instruction):
-    lang_model = LanguageModelInstructionEncoder(config.lang_model)
-    cos_sim = torch.nn.CosineSimilarity()
-    instruction_words = lang_model(instruction)
-
-    trajectories = []
-    all_instructions = file_storage.get_instruct_traj()
-
-    for i in range(instruction_words.shape[0]):
-        word = instruction_words[i]
-        max_index, max_sim = 0, -10
-        for j, (search_instruction, trajectory) in enumerate(all_instructions):
-            search_words = lang_model(search_instruction)
-            for k in range(search_words.shape[0]):
-                word2 = search_words[k]
-                word, word2 = torch.reshape(word, (1, -1)), torch.reshape(word2, (1, -1))
-                sim = cos_sim(word, word2)
-
-                if sim > max_sim:
-                    max_sim = sim
-                    max_index = j
-
-        trajectories.append(all_instructions[j][1])
-    return trajectories
 
 if __name__ == '__main__':
     print("=> Testing common.py")

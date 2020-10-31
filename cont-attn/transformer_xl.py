@@ -1,8 +1,7 @@
 import torch
+import numpy as np
 import torch.nn.functional as F
-from torch.nn.parameter import Parameter
-
-device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
+from torch.distributions.normal import Normal
 
 class PositionalEmbedding(torch.nn.Module):
     def __init__(self, dim):
@@ -50,7 +49,7 @@ class GatingMechanism(torch.nn.Module):
         self.sigmoid = torch.nn.Sigmoid()
         self.tanh = torch.nn.Tanh()
 
-    def forward(x, y):
+    def forward(self, x, y):
         r = self.sigmoid(self.Wr(y) + self.Ur(x))
         z = self.sigmoid(self.Wz(y) + self.Uz(x) - self.bg)
         h = self.tanh(self.Wg(y) + self.Ug(torch.mul(r, x)))
@@ -163,7 +162,8 @@ class StableTransformerEncoderLayerXL(torch.nn.Module):
         super(StableTransformerEncoderLayerXL, self).__init__()
 
         self.gating = gating
-        self.gate = GatingMechanism(d_input)
+        self.gate1 = GatingMechanism(d_input)
+        self.gate2 = GatingMechanism(d_input)
         self.mha = MultiHeadAttentionXL(d_input, d_head_inner, n_heads=n_heads, dropout=dropout, dropouta=dropouta)
         self.ff = PositionwiseFF(d_input, d_ff_inner, dropout)
         self.norm1 = torch.nn.LayerNorm(d_input)
@@ -172,14 +172,14 @@ class StableTransformerEncoderLayerXL(torch.nn.Module):
     def forward(self, input_, pos_embs, u, v, mask=None, mems=None):
         src2 = self.norm1(input_)
         src2 = self.mha(src2, pos_embs, mems, u, v, mask=mask)
-        src = self.gate(input_, src2)if self.gating else input_ + src2
+        src = self.gate1(input_, src2) if self.gating else input_ + src2
         src2 = self.ff(self.norm2(src))
-        src = self.gate(src, src2)if self.gating else src + src2
+        src = self.gate2(src, src2) if self.gating else src + src2
         return src
 
 class StableTransformerXL(torch.nn.Module):
     def __init__(self, d_input, n_layers, n_heads, d_head_inner, d_ff_inner,
-                 dropout=0.1, dropouta=0., seq_len=0, mem_len=0):
+                 dropout=0.1, dropouta=0.):
         super(StableTransformerXL, self).__init__()
 
         self.n_layers, self.n_heads, self.d_input, self.d_head_inner, self.d_ff_inner = \
@@ -190,8 +190,6 @@ class StableTransformerXL(torch.nn.Module):
         self.layers = torch.nn.ModuleList([StableTransformerEncoderLayerXL(n_heads, d_input, d_head_inner=d_head_inner,
                                                   d_ff_inner=d_ff_inner, dropout=dropout, dropouta=dropouta)
                                      for _ in range(n_layers)])
-
-        self.seq_len, self.mem_len = seq_len, mem_len
         
         # u and v are global parameters: maybe changing these to per-head parameters might help performance?
         self.u, self.v = (torch.nn.Parameter(torch.Tensor(self.n_heads, self.d_head_inner)),
@@ -216,17 +214,13 @@ class StableTransformerXL(torch.nn.Module):
         with torch.no_grad():
             new_memory = []
             end_idx = mem_len + seq_len
-            beg_idx = max(0, end_idx - self.mem_len)
+            beg_idx = max(0, end_idx - mem_len)
             for m, h in zip(previous_memory, hidden_states):
                 cat = torch.cat([m, h], dim=0) # (mem_len + seq_len, bs, d)
                 new_memory.append(cat[beg_idx:end_idx].detach()) # (self.mem_len, bs, d)
         return new_memory
     
-    def reset_length(self, seq_len, ext_len, mem_len):
-        self.seq_len = seq_len
-        self.mem_len = mem_len
-    
-    def forward(self, inputs, memory=None):
+    def forward(self, inputs, memory=None, mask=None):
         '''
             + Arguments 
                 - inputs - torch.FloatTensor
@@ -237,22 +231,24 @@ class StableTransformerXL(torch.nn.Module):
         assert len(memory) == len(self.layers) + 1
         
         cur_seq, bs = inputs.shape[:2]
-        prev_seq = memory[0].size(-1)
+        prev_seq = memory[0].size(0)
         
-        dec_attn_mask = torch.triu(
-            torch.ones((cur_seq, cur_seq + prev_seq)),
-            diagonal=1 + prev_seq,
-        ).byte()[..., None].to(inputs.device)
+        # TODO - maybe take mask as bool and if true, pass this instead of custom mask?
+        # dec_attn_mask = torch.triu(
+        #     torch.ones((cur_seq, cur_seq + prev_seq)),
+        #     diagonal=1 + prev_seq,
+        # ).byte()[..., None].to(inputs.device)
         
         pos_ips = torch.arange(cur_seq + prev_seq - 1, -1, -1.0, dtype=torch.float).to(inputs.device)
         pos_embs = self.drop(self.pos_embs(pos_ips))
-        print(pos_ips.shape, pos_embs.shape)
+        if self.d_input % 2 != 0:
+            pos_embs = pos_embs[:, :, :-1]
         
         hidden_states = [inputs]
         layer_out = inputs
         for mem, layer in zip(memory, self.layers):
             layer_out = layer(layer_out, pos_embs, self.u, self.v, 
-                              mask=dec_attn_mask, mems=mem)
+                              mask=mask, mems=mem)
             hidden_states.append(layer_out)
         
         # Update memory - Memory is treated as a const., we don't back propagate through it
@@ -260,7 +256,18 @@ class StableTransformerXL(torch.nn.Module):
         return {"logits": layer_out, "memory": new_memory}
 
 if __name__ == '__main__':
-    states = torch.randn(20, 5, 12)
-    transformer = StableTransformerXL(d_input=9, n_layers=4, n_heads=3, d_head_inner=32, d_ff_inner=71, seq_len=5, mem_len=3)
-    print(transformer(states))
+    states = torch.randn(20, 5, 8) # seq_size, batch_size, dim - better if dim % 2 == 0
+    # print("=> Testing Transformer")
+    # transformer = StableTransformerXL(d_input=states.shape[-1], n_layers=4, n_heads=3, d_head_inner=32, d_ff_inner=71)
+    # output = transformer(states, memory=None)
+    # output, mem = output['logits'], output['memory']
+    # print(output.shape, len(mem), mem[0].shape, torch.isinf(output).any(), torch.isnan(output).any())
+    # output = transformer(states, memory=mem)
+    # output, mem = output['logits'], output['memory']
+    # print(output.shape, len(mem), mem[0].shape, torch.isinf(output).any(), torch.isnan(output).any())
 
+    print("=> Testing Policy")
+    policy = TransformerGaussianPolicy(state_dim=states.shape[-1], act_dim=4)
+    act = policy(states)
+    action = act[0].sample()
+    print(torch.isnan(action).any(), action.shape)

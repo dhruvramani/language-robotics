@@ -31,6 +31,7 @@ class Instruction(PolymorphicModel):
     #       But => both sub & super have diff. PKs - Error.
     env_id = models.CharField(max_length=50)
     task_id = models.CharField(max_length=50)
+    instruction_path = models.CharField(max_length=1024)
     #user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     instruction = models.CharField(max_length=int(1e4))
     trajectory = models.ForeignKey(Trajectory, on_delete=models.CASCADE)

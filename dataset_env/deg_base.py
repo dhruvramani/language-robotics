@@ -30,13 +30,17 @@ class DataEnvGroup(object):
         # Set these after inheriting the class. NotImplementedError
         self.vis_obv_key = None
         self.dof_obv_key = None
+        self.instruction_key = 'instruction'
+        self.word_embeddings_key = 'word_embeddings'
+        self.sentence_embedding_key = 'sentence_embedding'
+
         self.obs_space = None
         self.action_space = None
 
     def get_env(self):
         raise NotImplementedError
 
-    def teleoperate(self, demon_config):
+    def teleoperate(self, demon_config, task=None):
         raise NotImplementedError
 
     def random_trajectory(self, demons_config):
@@ -54,7 +58,7 @@ class DataEnvGroup(object):
 
         def __len__(self):
             if self.episode_type is None:
-                return self.config.traj_db.objects.count()
+                return self.config.traj_db.objects.count() - 1 # HACK
             else:
                 return self.config.traj_db.objects.filter(episode_type=self.episode_type).count()
 
@@ -76,19 +80,23 @@ class DataEnvGroup(object):
             if self.config.data_agumentation:
                 trajectory[self.vis_obv_key] = rad.apply_augs(trajectory[self.vis_obv_key], self.config)
 
-            trajectory.update(instruction=instruction)
+            for key in instruction.keys():
+                trajectory.update({key : instruction[key]})
             return trajectory
 
-    def _collate_wrap(self):
+    def _collate_wrap(self, remove_task_state=False):
+        # NOTE - if batch_size > 1, it removes the task-dependent states to get a common dim.
         def pad_collate(batch):
             assert None not in [self.vis_obv_key, self.dof_obv_key]
             tr_vobvs = [torch.from_numpy(b[self.vis_obv_key]) for b in batch]
-            tr_dof = [torch.from_numpy(b[self.dof_obv_key]) for b in batch]
+            tr_dof = [torch.from_numpy(b[self.dof_obv_key][:, : self.obs_space[self.dof_obv_key]] if remove_task_state else b[self.dof_obv_key]) for b in batch] 
             tr_actions = [torch.from_numpy(b['action']) for b in batch]
 
             instructions = None
-            if 'instruction' in batch[0].keys():
-                instructions = [b['instruction'] for b in batch]
+            if self.instruction_key in batch[0].keys():
+                instructions = [b[self.instruction_key] for b in batch]
+                word_embs = [b[self.word_embeddings_key] for b in batch]
+                sentence_embs = [b[self.sentence_embedding_key] for b in batch]
 
             tr_vobvs_pad = pad_sequence(tr_vobvs, batch_first=True, padding_value=0)
             tr_dof_pad = pad_sequence(tr_dof, batch_first=True, padding_value=0)
@@ -96,7 +104,8 @@ class DataEnvGroup(object):
 
             padded_batch = {self.vis_obv_key : tr_vobvs_pad, self.dof_obv_key : tr_dof_pad, 'action' : tr_actions_pad}
             if instructions is not None:
-                padded_batch.update(instruction=instructions)
+                padded_batch.update({self.instruction_key : instructions, 
+                    self.word_embeddings_key : word_embs, self.sentence_embedding_key : sentence_embs})
 
             return padded_batch
 
@@ -104,10 +113,10 @@ class DataEnvGroup(object):
 
     def get_traj_dataloader(self, batch_size, num_workers=1, shuffle=True):
         dataloader = DataLoader(dataset=self.traj_dataset, batch_size=batch_size, 
-            shuffle=shuffle, num_workers=num_workers, collate_fn=self._collate_wrap())
+            shuffle=shuffle, num_workers=num_workers, collate_fn=self._collate_wrap(remove_task_state=True)) # (batch_size != 1)
         return dataloader
 
     def get_instruct_dataloader(self, batch_size, num_workers=1, shuffle=True):
         dataloader = DataLoader(dataset=self.instruct_dataset, batch_size=batch_size, 
-            shuffle=shuffle, num_workers=num_workers, collate_fn=self._collate_wrap())
+            shuffle=shuffle, num_workers=num_workers, collate_fn=self._collate_wrap(remove_task_state=True)) # (batch_size != 1)
         return dataloader

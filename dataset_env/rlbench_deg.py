@@ -8,20 +8,14 @@ from file_storage import store_trajectoy
 
 ENV_PATH = '/scratch/scratch2/dhruvramani/envs/RLBench'
 sys.path.append(ENV_PATH)
-
-import rlbench.gym
-from rlbench.environment import Environment
-from rlbench.action_modes import ArmActionMode, ActionMode
-from rlbench.backend.observation import Observation
-from rlbench.observation_config import ObservationConfig
-from rlbench.tasks import ReachTarget
+# NOTE - imports within get_env to avoid Mujoco imports unless needed.
 
 class RLBenchDataEnvGroup(DataEnvGroup):
     ''' DataEnvGroup for RLBench environment. 
         
         + The observation space can be modified through `global_config.env_args`
         + Observation space:
-            - 'state': proprioceptive feature - vector of:
+            - 'state': proprioceptive feature : [37] + task_specific
                 > robot joint - velocities, positions, forces
                 > gripper - pose, joint-position, touch_forces
                 > task_low_dim_state
@@ -55,7 +49,7 @@ class RLBenchDataEnvGroup(DataEnvGroup):
         self.env_action_key = 'joint_velocities'
         self.env_gripper_key = 'gripper_open'
 
-        self.obs_space = {self.dof_obv_key : (40),self.left_obv_key : (128, 128, 3), self.right_obv_key : (128, 128, 3),
+        self.obs_space = {self.dof_obv_key : (37), self.left_obv_key : (128, 128, 3), self.right_obv_key : (128, 128, 3),
                     self.wrist_obv_key : (128, 128, 3), self.front_obv_key: (128, 128, 3)}
         
         self.action_space, self.gripper_space = (7), (1)
@@ -63,6 +57,12 @@ class RLBenchDataEnvGroup(DataEnvGroup):
             self.action_space += self.gripper_space
 
     def get_env(self, task=None):
+        import rlbench.gym
+        from rlbench.environment import Environment
+        from rlbench.action_modes import ArmActionMode, ActionMode
+        from rlbench.observation_config import ObservationConfig
+        from rlbench.tasks import ReachTarget
+
         task = task if task else self.config.env_type
         if self.use_gym:
             assert type(task) == str # NOTE : When using gym, the task has to be represented as a sting.
@@ -109,10 +109,12 @@ class RLBenchDataEnvGroup(DataEnvGroup):
             obs = obs[1]
         if type(obs) == dict:
             return obs[key]
-        elif type(obs) == Observation:
-            if key == 'state':
-                return obs.get_low_dim_data()
-            return getattr(obs, key)
+        else:
+            from rlbench.backend.observation import Observation
+            if type(obs) == Observation:
+                if key == 'state':
+                    return obs.get_low_dim_data()
+                return getattr(obs, key)
 
     def shutdown_env(self):
         if self.env_obj is None:
@@ -123,11 +125,17 @@ class RLBenchDataEnvGroup(DataEnvGroup):
             self.env_obj.shutdown()
         self.env_obj = None
 
-    def teleoperate(self, demons_config):
+    def teleoperate(self, demons_config, task=None):
         if self.config.env_args['keyboard_teleop']:
             raise NotImplementedError
         else:
-            env = self.get_env()
+            if self.env_obj is None or task is None:
+                env = self.get_env(task)
+            else:
+                if type(task) == str:
+                    task = self.env_obj._string_to_task(task.split('-')[0])        
+                env = self.env_obj.get_task(task)
+
             if self.use_gym:
                 demos = env.task.get_demos(demons_config.n_runs, live_demos=True)
             else : 
@@ -149,7 +157,7 @@ class RLBenchDataEnvGroup(DataEnvGroup):
                 trajectory = {self.dof_obv_key : tr_dof, 'action' : tr_actions}
                 if self.observation_mode != 'state':
                     trajectory.update({self.vis_obv_key : tr_vobvs})
-                store_trajectoy(trajectory, 'teleop')
+                store_trajectoy(trajectory, episode_type='teleop', task=task)
             
             self.shutdown_env()
 
@@ -172,7 +180,7 @@ class RLBenchDataEnvGroup(DataEnvGroup):
         trajectory = {self.dof_obv_key : np.array(tr_dof), 'action' : np.array(tr_actions)}
         if self.observation_mode != 'state':
             trajectory.update({self.vis_obv_key : np.array(tr_vobvs)})
-        store_trajectoy(trajectory, 'random')
+        store_trajectoy(trajectory, episode_type='random')
         self.shutdown_env()
 
 if __name__ == '__main__':
@@ -181,14 +189,17 @@ if __name__ == '__main__':
 
     deg = RLBenchDataEnvGroup()
     print(deg.obs_space[deg.vis_obv_key], deg.action_space)
-    env = deg.get_env()
-    obs = env.reset()
-    print(obs)
-    print(deg._get_obs(obs, deg.dof_obv_key).shape)
+    # env = deg.get_env(task='change_clock')
+    # obs = env.reset()
+    # print(deg._get_obs(obs, deg.dof_obv_key).shape)
+    # print(deg._get_obs(obs, 'task_low_dim_state').shape)
 
-    #traj_data = DataLoader(deg.traj_dataset, batch_size=1, shuffle=True, num_workers=1)
+    #traj_data = DataLoader(deg.traj_dataset, batch_size=1, shuffle=False, num_workers=1)
     traj_data = deg.get_traj_dataloader(batch_size=5)
-    print(next(iter(traj_data))[deg.dof_obv_key].shape)
+    print(len(traj_data.dataset))
+    for i, b in enumerate(traj_data):
+       print(i, b[deg.vis_obv_key].shape)
+       break
 
     # instruct_data = DataLoader(deg.instruct_dataset, sample_size=1, shuffle=True, num_workers=1)
     # print(next(iter(instruct_data))['instruction'])

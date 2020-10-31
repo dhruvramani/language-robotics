@@ -24,6 +24,7 @@ def get_dataset_args():
     parser.add_argument('--traj_db', type=env2TrajDB, default='SURREAL')
     parser.add_argument('--instruct_db', type=env2InstructDB, default='SURREAL')
     parser.add_argument('--obv_keys', type=env2keys, default='SURREAL')
+    parser.add_argument('--get_by_task_id', type=bool, default=False)
     parser.add_argument('--archives_path', type=str, default=os.path.join(DATA_DIR, 'data_files/archives'))
     parser.add_argument('--episode_type', type=ep_type, default='teleop', choices=['teleop', 'imitation', 'expert', 'policy', 'exploration', 'random'])
     parser.add_argument('--media_dir', type=str, default=os.path.join(BASE_DIR, 'db/static/media/'))

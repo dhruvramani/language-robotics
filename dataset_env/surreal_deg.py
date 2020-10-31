@@ -8,10 +8,7 @@ from file_storage import store_trajectoy
 
 ENV_PATH = '/scratch/scratch2/dhruvramani/envs/robosuite'
 sys.path.append(ENV_PATH)
-
-import robosuite as suite
-from robosuite.wrappers import IKWrapper
-import robosuite.utils.transform_utils as T
+# NOTE - imports within get_env, teleop to avoid Mujoco imports unless needed.
 
 class SurrealDataEnvGroup(DataEnvGroup):
     ''' DataEnvGroup for Surreal Robotics Suite environment. 
@@ -42,6 +39,8 @@ class SurrealDataEnvGroup(DataEnvGroup):
         self.action_space = (8)
 
     def get_env(self):
+        import robosuite as suite
+
         env = suite.make(self.config.env_type, **self.config.env_args)
         return env
 
@@ -51,9 +50,11 @@ class SurrealDataEnvGroup(DataEnvGroup):
         raise NotImplementedError
 
     def teleoperate(self, demons_config):
+        from robosuite.wrappers import IKWrapper
+        import robosuite.utils.transform_utils as T
+
         env = self.get_env()
-        # Need to use inverse-kinematics controller to set position using device 
-        env = IKWrapper(env)
+        env = IKWrapper(env)  # Need to use inverse-kinematics controller to set position using device 
         
         if demons_config.device == "keyboard":
             from robosuite.devices import Keyboard

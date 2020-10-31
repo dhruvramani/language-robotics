@@ -1,10 +1,13 @@
 import os
+import sys
 import numpy
 import torch
 import matplotlib.pyplot as plt
 
 from models import *
 #from render_browser import render_browser
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
+import common
 
 device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
 
@@ -20,7 +23,17 @@ def test_dummy(config):
 
         for i in range(config.n_test_evals):
             obvs, done, t = env.reset(), False, 0
-            _set = next(iter(deg.get_traj_dataloader(batch_size=5)))
+            
+            if config.use_lang_search:
+                instruction = input("Enter Instruction : ")
+                lang_model = common.LanguageModelInstructionEncoder('bert')
+                instruct_dict = lang_model(instruction)
+                _set = get_similar_traj(config, instruct_dict['word_embeddings'])
+                _set = deg._collate_wrap()(_set)
+                _set = {key : _set[key].float().to(device) for key in _set.keys()}
+            else:
+                _set = next(iter(deg.get_traj_dataloader(batch_size=5)))
+
             state_set, action_set = _set[deg.dof_obv_key].float().to(device), _set['action'].float().to(device)
             batch_size, seq_len = state_set.shape[0], state_set.shape[1] 
             state_set = state_set.reshape(seq_len * batch_size, 1, -1)

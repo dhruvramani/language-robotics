@@ -28,7 +28,7 @@ def get_global_parser():
                             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
     parser.add_argument('--env', type=str, default='RLBENCH') #SURREAL
-    parser.add_argument('--env_type', type=str, default='reach_target-vision-v0') #SawyerPickPlace
+    parser.add_argument('--env_type', type=str, default='close_drawer-vision-v0') #SawyerPickPlace
     parser.add_argument('--env_args', type=env2args, default='RLBENCH') # NOTE : placeholder, changed later.
     parser.add_argument('--exp_name', type=str, default='v0.5')
     parser.add_argument('--use_visual_models', type=utils.str2bool, default=True, 
