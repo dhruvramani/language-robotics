@@ -50,13 +50,13 @@ def get_model_args():
         config.models_save_path = os.path.join(config.models_save_path, '{}_{}_{}_{}/'.format(config.model, config.env, config.env_type, config.exp_name)) 
         config.tensorboard_path = os.path.join(config.tensorboard_path, '{}_{}_{}_{}/'.format(config.model, config.env, config.env_type, config.exp_name)) 
 
-    if config.is_train and not config.resume:
-        utils.recreate_dir(config.models_save_path, config.display_warnings)
-        utils.recreate_dir(config.tensorboard_path, config.display_warnings)
-    else:
-        utils.check_n_create_dir(config.models_save_path, config.display_warnings)
-        utils.check_n_create_dir(config.tensorboard_path, config.display_warnings)
+    # if config.is_train and not config.resume:
+    #     utils.recreate_dir(config.models_save_path, config.display_warnings)
+    #     utils.recreate_dir(config.tensorboard_path, config.display_warnings)
+    # else:
+    #     utils.check_n_create_dir(config.models_save_path, config.display_warnings)
+    #     utils.check_n_create_dir(config.tensorboard_path, config.display_warnings)
 
-    utils.check_n_create_dir(config.data_path, config.display_warnings)
+    # utils.check_n_create_dir(config.data_path, config.display_warnings)
 
     return config

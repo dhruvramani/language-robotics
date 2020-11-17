@@ -9,7 +9,7 @@ import utils
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_env/'))
 
 BASE_DIR = os.path.dirname((os.path.abspath(__file__)))
-DATA_DIR = '/scratch/scratch2/dhruvramani/language-robotics_data' #"/content/drive/My\ Drive/Projects/lang-robotics/data"
+DATA_DIR = "/content/drive/My Drive/Projects/lang-robotics/data"#.replace(" ", "\\ ")
 TIME_STAMP = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
 # NOTE : RLBench  - Run `Xvfb :DISP_NUM -screen 0 1024x768x24 +extension GLX +render -noreset &`

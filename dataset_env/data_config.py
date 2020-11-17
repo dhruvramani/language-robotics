@@ -44,9 +44,9 @@ def get_dataset_args():
     config.archives_path = os.path.join(config.archives_path, '{}_{}/'.format(config.env, config.env_type)) 
     config.vid_path = os.path.join(config.media_dir, config.vid_path)
 
-    utils.check_n_create_dir(config.data_path, config.display_warnings)
-    utils.check_n_create_dir(config.archives_path, config.display_warnings)
-    utils.check_n_create_dir(config.media_dir, config.display_warnings)
+    # utils.check_n_create_dir(config.data_path, config.display_warnings)
+    # utils.check_n_create_dir(config.archives_path, config.display_warnings)
+    # utils.check_n_create_dir(config.media_dir, config.display_warnings)
 
     return config
 

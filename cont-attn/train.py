@@ -12,7 +12,7 @@ from models import *
 from models import get_similar_traj
 
 # NOTE : If in future, you operate on bigger hardwares - move to PyTorch Lightning
-device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def train(config):
     print("Device - ", device)
