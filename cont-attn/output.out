@@ -1,0 +1,5 @@
+Device -  cpu
+Number of parameters : 8
+Run : `tensorboard --logdir=/scratch/scratch2/dhruvramani/language-robotics_data/runs/tensorboard/basic_attn_RLBENCH_close_drawer-vision-v0_v0.5_bert/ --host '0.0.0.0' --port 6006`
+/scratch/scratch2/dhruvramani/miniconda3/envs/py3.6/lib/python3.6/site-packages/torch/cuda/__init__.py:52: UserWarning: CUDA initialization: Found no NVIDIA driver on your system. Please check that you have an NVIDIA GPU and installed a driver from http://www.nvidia.com/Download/index.aspx (Triggered internally at  /pytorch/c10/cuda/CUDAFunctions.cpp:100.)
+  return torch._C._cuda_getDeviceCount() > 0
