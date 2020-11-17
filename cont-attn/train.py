@@ -15,9 +15,9 @@ from models import get_similar_traj
 device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
 
 def train(config):
+    print("Device - ", device)
     tensorboard_writer = SummaryWriter(logdir=config.tensorboard_path)
     deg = config.deg()
-    
     vobs_dim, dof_dim = deg.obs_space[deg.vis_obv_key], deg.obs_space[deg.dof_obv_key]
     act_dim = deg.action_space
 
@@ -92,7 +92,7 @@ def train(config):
 
                 loss = mse_loss(preds, query_actions)
                 loss_avg += loss
-                tensorboard_writer.add_scalar('lang_{}_loss'.format(config.model), loss, epoch * max_step_size + i)
+                tensorboard_writer.add_scalar('lang_{}_{}_loss'.format(config.model, "visual" if config.use_visual_obv else "state"), loss, epoch * max_step_size + i)
                 
                 loss.backward()
                 optimizer.step()

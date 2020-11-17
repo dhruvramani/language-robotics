@@ -8,6 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 import data_aug as rad
 from data_config import get_dataset_args
 from file_storage import get_trajectory, get_random_trajectory, get_instruct_traj
+from file_storage import get_trajectory_non_db, get_instruct_traj_non_db
 
 class DataEnvGroup(object):
     ''' + NOTE : Create subclass for every environment, eg.
@@ -63,7 +64,7 @@ class DataEnvGroup(object):
                 return self.config.traj_db.objects.filter(episode_type=self.episode_type).count()
 
         def __getitem__(self, idx):
-            trajectory =  get_trajectory(index=idx, episode_type=self.episode_type)
+            trajectory = get_trajectory_non_db(index=idx) if self.config.no_db else get_trajectory(index=idx, episode_type=self.episode_type)
             if self.config.data_agumentation:
                 trajectory[self.vis_obv_key] = rad.apply_augs(trajectory[self.vis_obv_key], self.config)
             return trajectory
@@ -76,7 +77,8 @@ class DataEnvGroup(object):
             return self.config.instruct_db.objects.count()
 
         def __getitem__(self, idx):
-            instruction, trajectory = get_instruct_traj(index=idx)
+            instruction, trajectory = get_instruct_traj_non_db(index=idx) if self.config.no_db else get_instruct_traj(index=idx)
+
             if self.config.data_agumentation:
                 trajectory[self.vis_obv_key] = rad.apply_augs(trajectory[self.vis_obv_key], self.config)
 

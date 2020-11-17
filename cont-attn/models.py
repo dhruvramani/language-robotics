@@ -42,8 +42,7 @@ def get_similar_traj(config, deg, instruct_traj):
             search_space = deg.config.instruct_db.objects.filter(instruction__contains=word.lower())
             if search_space:
                 episode_id = random.choice(search_space).trajectory.episode_id
-                #print(episode_id)
-                traj = file_storage.get_trajectory(episode_id=episode_id)
+                traj = file_storage.get_trajectory_non_db(episode_id=str(episode_id)) if config.no_db else file_storage.get_trajectory(episode_id=episode_id)
             else:
                 word_embd = instruct_traj[deg.word_embeddings_key][i][j]
                 traj = cosine_search(config, word_embd)

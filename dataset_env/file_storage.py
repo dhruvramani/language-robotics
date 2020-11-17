@@ -6,7 +6,6 @@ import torch
 import pickle
 import tarfile
 import numpy as np
-import torchvision
 from random import randint
 from data_config import get_dataset_args, ep_type
 
@@ -16,7 +15,6 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../traj_db/'))
 config = get_dataset_args()
 
-import common
 from traj_db.models import ArchiveFile
 
 def store_trajectoy(trajectory, episode_type=config.episode_type, task=None):
@@ -44,12 +42,14 @@ def store_trajectoy(trajectory, episode_type=config.episode_type, task=None):
         pickle.dump(trajectory, file, protocol=pickle.HIGHEST_PROTOCOL)
 
 def save_instruct_traj(traj_id, instruction):
+    import common
+
     traj_id = str(traj_id)
     trajectory = config.traj_db.objects.get(episode_id=uuid.UUID(traj_id))
     instruct_obj = config.instruct_db(env_id=trajectory.env_id, task_id=trajectory.task_id,
         instruction=instruction, trajectory=trajectory, instruction_path=config.data_path)
     instruct_obj.save()
-    instruct_obj.instruction_path = os.path.join(config.data_path, "instruct_{}.pt".format(instruct_obj.instruction_id))
+    instruct_obj.instruction_path = os.path.join(config.data_path, "instruct_{}_{}.pt".format(instruct_obj.instruction_id, traj_id))
     instruct_obj.save()
 
     lang_model = common.LanguageModelInstructionEncoder('bert')
@@ -115,6 +115,39 @@ def get_trajectory(episode_type=None, index=None, episode_id=None):
 
     return trajectory
 
+def get_instruct_traj_non_db(index=None, instruction_id=None):
+    files = [file for file in os.listdir(config.data_path) if 'instruct' in file]
+    if instruction_id is None and index is None:
+        return [get_trajectory_non_db(index=i) for i in range(len(files))]
+
+    if index is not None:
+        file_path = config.data_path + files[index]
+    elif instruction_id is not None:
+        file_path = config.data_path + [file for file in files if instruction_id in file][0]
+
+    with open(file_path, 'rb') as file:
+        instruct_dict = pickle.load(file)
+
+    traj_id = file_path.split('/')[-1].split('_')[-1].split('.')[0]
+    trajectory = get_trajectory_non_db(episode_id=traj_id)
+
+    return instruct_dict, trajectory
+
+def get_trajectory_non_db(index=None, episode_id=None):
+    files = [file for file in os.listdir(config.data_path) if 'traj' in file]
+    if episode_id is None and index is None:
+        return [get_trajectory_non_db(index=i) for i in range(len(files))]
+
+    if index is not None:
+        file_path = config.data_path + files[index]
+    elif episode_id is not None:
+        file_path = config.data_path + [file for file in files if episode_id in file][0]
+
+    with open(file_path, 'rb') as file:
+        trajectory = pickle.load(file)
+
+    return trajectory
+    
 def get_random_trajectory(episode_type=None):
     '''
         Gets a random trajectory from the corresponding database based on env and env_type specified in config.
@@ -140,6 +173,8 @@ def create_video(trajectory):
         + Arguments:
             - trajectory: {deg.vis_obv_key : np.array([n]), deg.dof_obv_key : np.array([n]), 'action' : np.array([n])}
     '''
+    import torchvision
+
     frames = trajectory[config.obv_keys['vis_obv_key']].astype(np.uint8)
     assert frames.shape[-1] == 3
     
@@ -194,6 +229,12 @@ def delete_trajectory(episode_id):
         os.remove(obj.data_path)
     obj.delete()
 
+def delete_instruct(instruction_id):
+    obj = config.instruct_db.objects.get(instruction_id=uuid.UUID(instruction_id))
+    if os.path.exists(obj.instruction_path):
+        os.remove(obj.instruction_path)
+    obj.delete()
+
 def flush_traj_db():
     raise NotImplementedError
 
@@ -213,3 +254,19 @@ def add_vocab(sentence):
     vocab = set(list(vocab) + re.sub("[^\w]", " ",  sentence).split())
     with open(config.vocab_path, 'wb') as pkl_file:
         pickle.dump(vocab, pkl_file)
+
+def rename_instruct_trajs():
+    for instruct_obj in config.instruct_db.objects.all():
+        trajectory_obj = instruct_obj.trajectory
+        new_path = os.path.join(config.data_path, "instruct_{}_{}.pt".format(instruct_obj.instruction_id, str(trajectory_obj.episode_id)))
+        if os.path.isfile(instruct_obj.instruction_path):
+            os.rename(instruct_obj.instruction_path, new_path)
+        instruct_obj.instruction_path = new_path
+
+if __name__ == '__main__':
+    print(len(config.instruct_db.objects.all()))
+    # files = [file for file in os.listdir(config.data_path) if 'instruct' in file]
+    # for instruct_obj in config.instruct_db.objects.all():
+    #     file_ids = [f.split('_')[1].split('.')[0] for f in files]
+    #     if instruct_obj.instruction_id not in file_ids:
+    #         print(instruct_obj.instruction_id)

@@ -26,16 +26,16 @@ def get_model_args():
 
     parser.add_argument('--max_cosine_cutoff', type=float, default=0.85)
 
-    parser.add_argument('--max_epochs', type=int, default=75) #50
+    parser.add_argument('--max_epochs', type=int, default=25) #50
     parser.add_argument('--batch_size', type=int, default=1) # NOTE - Even if batch_size=1, seq_size ~ 200
-    parser.add_argument('--learning_rate', type=float, default=2e-4)
+    parser.add_argument('--learning_rate', type=float, default=3e-4)
     parser.add_argument('--n_test_evals', type=int, default=1)
     parser.add_argument('--max_test_timestep', type=int, default=150)
 
     parser.add_argument('--use_lang_search', type=utils.str2bool, default=True)
-    parser.add_argument('--model', type=str, default='rl_transformer', choices=['basic_attn', 'rl_transformer', 'transformer_normal'])
+    parser.add_argument('--model', type=str, default='basic_attn', choices=['basic_attn', 'rl_transformer', 'transformer_normal'])
     parser.add_argument('--lang_model', type=str, default='bert')
-    parser.add_argument('--use_visual_obv', type=utils.str2bool, default=True)
+    parser.add_argument('--use_visual_obv', type=utils.str2bool, default=False)
     parser.add_argument('--vis_emb_dim', type=int, default=64)
 
     config = parser.parse_args()
@@ -44,11 +44,11 @@ def get_model_args():
 
     config.data_path = os.path.join(config.data_path, '{}_{}/'.format(config.env, config.env_type)) 
     if config.use_lang_search:
-        config.models_save_path = os.path.join(config.models_save_path, 'contattn_{}_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name, config.lang_model)) 
-        config.tensorboard_path = os.path.join(config.tensorboard_path, 'contattn_{}_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name, config.lang_model)) 
+        config.models_save_path = os.path.join(config.models_save_path, '{}_{}_{}_{}_{}/'.format(config.model, config.env, config.env_type, config.exp_name, config.lang_model)) 
+        config.tensorboard_path = os.path.join(config.tensorboard_path, '{}_{}_{}_{}_{}/'.format(config.model, config.env, config.env_type, config.exp_name, config.lang_model)) 
     else:
-        config.models_save_path = os.path.join(config.models_save_path, 'contattn_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name)) 
-        config.tensorboard_path = os.path.join(config.tensorboard_path, 'contattn_{}_{}_{}/'.format(config.env, config.env_type, config.exp_name)) 
+        config.models_save_path = os.path.join(config.models_save_path, '{}_{}_{}_{}/'.format(config.model, config.env, config.env_type, config.exp_name)) 
+        config.tensorboard_path = os.path.join(config.tensorboard_path, '{}_{}_{}_{}/'.format(config.model, config.env, config.env_type, config.exp_name)) 
 
     if config.is_train and not config.resume:
         utils.recreate_dir(config.models_save_path, config.display_warnings)

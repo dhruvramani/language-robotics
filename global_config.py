@@ -9,7 +9,7 @@ import utils
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_env/'))
 
 BASE_DIR = os.path.dirname((os.path.abspath(__file__)))
-DATA_DIR = '/scratch/scratch2/dhruvramani/language-robotics_data'
+DATA_DIR = '/scratch/scratch2/dhruvramani/language-robotics_data' #"/content/drive/My\ Drive/Projects/lang-robotics/data"
 TIME_STAMP = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
 # NOTE : RLBench  - Run `Xvfb :DISP_NUM -screen 0 1024x768x24 +extension GLX +render -noreset &`
@@ -29,8 +29,9 @@ def get_global_parser():
     
     parser.add_argument('--env', type=str, default='RLBENCH') #SURREAL
     parser.add_argument('--env_type', type=str, default='close_drawer-vision-v0') #SawyerPickPlace
-    parser.add_argument('--env_args', type=env2args, default='RLBENCH') # NOTE : placeholder, changed later.
+    parser.add_argument('--env_args', type=env2args, default='RLBENCH') # NOTE: placeholder, changed below.
     parser.add_argument('--exp_name', type=str, default='v0.5')
+    parser.add_argument('--no_db', type=utils.str2bool, default=False) # NOTE: DB doesn't work w/ Kubernetes.
     parser.add_argument('--use_visual_models', type=utils.str2bool, default=True, 
         help='Load pretrained visual models for lang exps. See model_config.')
     parser.add_argument('--max_sequence_length', type=int, default=32)
